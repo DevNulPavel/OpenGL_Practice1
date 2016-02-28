@@ -1,33 +1,38 @@
 set(PROJECT_NAME "OpenGL_Practice1")
 # Конфиги флагов компиляции
-set(PROJECT_C_FLAGS -O0 -wall -g)			# Проектные флаги компиляции для C
-set(PROJECT_CXX_FLAGS -O0  -wall -g)			# Проектные флаги компиляции для C++
+set(PROJECT_C_FLAGS "-O0 -Wall -g")			# Проектные флаги компиляции для C
+set(PROJECT_CXX_FLAGS "-O0 -Wall -g")			# Проектные флаги компиляции для C++
+set(PROJECT_LINK_FLAGS )					# Флаги линковки
 # Пути к исходникам
 set(SRC_FOLDERS 
-	src/)
+	src)
 # Конфиги используемых библиотек
 set(LIBS_FOLDER libs/)
 set(LIBS_FOLDERS 
-	assimp/
-	glm/
-	freeImage/
-	glfw/)
+	glm
+	freeImage
+	glfw)
 set(LIBS_PARAMETERS 
 	)
 set(LIBS_LINK_NAMES
+	glfw
+	# GLFW_LIBRARIES
+	)
+set(LIBS_DEPENCY_NAMES
+	GLFW
+	# GLFW_LIBRARIES
 	)
 set(LIBS_INCLUDE_FOLDERS
-	assimp/include/
-	glm/glm/ 			# TODO: может можно просто корень
-	freeImage/Source/
-	glfw/include/)
+	glm/glm 			# TODO: может можно просто корень
+	freeImage/Source
+	glfw/include)
 
 
 ####################################################
 # Настройка CMake сборки
 ####################################################
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
-cmake_policy(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+cmake_policy(VERSION 2.8)
 if (NOT CMAKE_VERSION VERSION_LESS "3.1")
 	cmake_policy(SET CMP0054 NEW)
 endif()
@@ -39,22 +44,76 @@ include("CMake/Helpers.cmake")
 if (UNIX)
 	execute_process(COMMAND which clang OUTPUT_VARIABLE CLANG_PATH)
 	execute_process(COMMAND which clang++ OUTPUT_VARIABLE CLANGXX_PATH)
-	# if(NOT ("${CLANG_PATH}" STREQUAL ""))
+	if(NOT ("${CLANG_PATH}" STREQUAL ""))
 		set(CMAKE_C_COMPILER "clang")
 		set(CMAKE_CXX_COMPILER "clang++")
-	# endif()
+	endif()
 endif()
 
 # Инициализация проекта
-project(${PROJECT_NAME})
+project(${PROJECT_NAME} C CXX)
 
+enable_testing()
+
+####################################################
+# Библиотеки
+####################################################
+# Прописываем инклюды в которых будем искать хедеры библиотек проекта
+message("******** Lib include dirs ***********")
+foreach(INCLUDE_DIR ${LIBS_INCLUDE_FOLDERS})
+	include_directories(${LIBS_FOLDER}${INCLUDE_DIR})
+	message(${LIBS_FOLDER}${INCLUDE_DIR})
+endforeach(INCLUDE_DIR)
+
+# Запускаем конфигурацию подпроектов
+foreach(LIBRARY_DIR ${LIBS_FOLDERS})
+	message("******** Subproject start ***********")
+	message("Project with path = ${LIBS_FOLDER}${LIBRARY_DIR}")
+	add_subdirectory(${LIBS_FOLDER}${LIBRARY_DIR} ${CMAKE_BINARY_DIR}/libs/${LIBRARY_DIR})
+	# message("LIBS = ${GLFW_LIBRARIES}")
+endforeach()
+
+####################################################
+# Системные библиотеки
+####################################################
+if(APPLE)
+	set (SYSTEM_LIBS 
+		"-framework OpenGL"
+		"-framework Cocoa"
+		"-framework IOKit"
+		"-framework CoreAudio"
+		"-framework CoreVideo"
+		"-framework AudioToolbox"
+		"-framework AudioUnit"
+		"-framework AVFoundation"
+		"-ObjC")
+else (UNIX)
+	set (SYSTEM_LIBS 
+		m c dl z GL pthread)
+else (MSYS)
+	set (SYSTEM_LIBS )
+	# TODO: 
+endif ()
+message("******** System libs list ***********")
+message("${SYSTEM_LIBS}")
+
+####################################################
+# Настройка сборки текущего проекта
+####################################################
 # Сразу отключаем ненужные предупреждения на Windows
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+if (MSYS)
+	add_definitions ( -D_CRT_SECURE_NO_WARNINGS )
+	add_definitions ( -D_SCL_SECURE_NO_WARNINGS )
+endif ()
 
 # Не кастомные флаги компиляции
-if (UNIX)
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
-  	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+if(APPLE)
+	# TODO: пробросить линковку
+	set (PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS} -stdlib=libc++")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+else (UNIX)
+	# set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
+  	# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 else (MSYS)
 	# микрософту не нужен флаг -std=c++11
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /w")
@@ -67,19 +126,6 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${PROJECT_CXX_FLAGS})
 
 # Вывод информации о настройке копиляции (Функция в CMake/Helpers.cmake)
 print_current_cmake_config()
-
-####################################################
-# Библиотеки
-####################################################
-# Прописываем инклюды в которых будем искать хедеры библиотек проекта
-foreach(INCLUDE_DIR ${INCLUDE_DIRECTORIES})
-	include_directories(${LIBS_FOLDER}${INCLUDE_DIR})
-endforeach(INCLUDE_DIR)
-
-# Запускаем конфигурацию подпроектов
-foreach(LIBRARY_DIR ${LIBS_FOLDERS})
-	add_subdirectory(${LIBS_FOLDER}${LIBRARY_DIR})
-endforeach()
 
 
 ####################################################
@@ -99,6 +145,19 @@ foreach(DIR ${SRC_FOLDERS})
 	list(APPEND ALL_HEADERS ${HEADERS})
 	list(APPEND ALL_SOURCES ${SOURCES})
 endforeach(DIR)
+message("******** Sources list ***********")
+message("${ALL_HEADERS}")
+message("${ALL_SOURCES}")
+
+####################################################
+# Генерация
+####################################################
+message("******** Generating started ***********")
+# Зависимости сборки
+# add_dependencies (${PROJECT_NAME} ${LIBS_DEPENCY_NAMES})
 
 # Из найденных исходников выставляем генерацию бинарника
 add_executable(${PROJECT_NAME} ${ALL_HEADERS} ${ALL_SOURCES})
+
+# Библиотеки, с которыми будем ликовать
+target_link_libraries (${PROJECT_NAME} ${LIBS_LINK_NAMES} ${SYSTEM_LIBS})
