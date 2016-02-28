@@ -10,7 +10,7 @@ set(SRC_FOLDERS
 set(LIBS_FOLDER libs/)
 set(LIBS_FOLDERS 
 	glm
-	freeImage
+	# freeImage
 	glfw)
 set(LIBS_PARAMETERS 
 	)
@@ -24,7 +24,7 @@ set(LIBS_DEPENCY_NAMES
 	)
 set(LIBS_INCLUDE_FOLDERS
 	glm/glm 			# TODO: может можно просто корень
-	freeImage/Source
+	# freeImage/Source
 	glfw/include)
 
 
@@ -42,12 +42,26 @@ include("CMake/Helpers.cmake")
 
 # Если у нас есть компилятор clang на юникс - используем его
 if (UNIX)
-	execute_process(COMMAND which clang OUTPUT_VARIABLE CLANG_PATH)
-	execute_process(COMMAND which clang++ OUTPUT_VARIABLE CLANGXX_PATH)
-	if(NOT ("${CLANG_PATH}" STREQUAL ""))
+	message("********* Unix compilation check *********")
+	 # Используем ccache (если есть) для ускорения сборки
+    find_program(CCACHE_FOUND ccache)
+    if(CCACHE_FOUND)
+        message("-> ССache will used for compilation")
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+    endif(CCACHE_FOUND)
+
+    # Вариант с путями
+	# execute_process(COMMAND which clang OUTPUT_VARIABLE CLANG_PATH)
+	# execute_process(COMMAND which clang++ OUTPUT_VARIABLE CLANGXX_PATH)
+	# if(NOT ("${CLANG_PATH}" STREQUAL ""))
+	find_program(CLANG_FOUND clang)
+	if(CLANG_FOUND)
+		message("-> Clang will used for compilation")
 		set(CMAKE_C_COMPILER "clang")
 		set(CMAKE_CXX_COMPILER "clang++")
-	endif()
+	endif(CLANG_FOUND)
+	message("**********************************")
 endif()
 
 # Инициализация проекта
@@ -70,7 +84,7 @@ foreach(LIBRARY_DIR ${LIBS_FOLDERS})
 	message("******** Subproject start ***********")
 	message("Project with path = ${LIBS_FOLDER}${LIBRARY_DIR}")
 	add_subdirectory(${LIBS_FOLDER}${LIBRARY_DIR} ${CMAKE_BINARY_DIR}/libs/${LIBRARY_DIR})
-	# message("LIBS = ${GLFW_LIBRARIES}")
+	message("LIBS = ${GLFW_LIBRARIES}")
 endforeach()
 
 ####################################################
@@ -89,7 +103,8 @@ if(APPLE)
 		"-ObjC")
 else (UNIX)
 	set (SYSTEM_LIBS 
-		m c dl z GL pthread)
+		rt Xrandr Xinerama Xi Xxf86vm Xcursor
+		m c dl z GL pthread X11)
 else (MSYS)
 	set (SYSTEM_LIBS )
 	# TODO: 
@@ -153,11 +168,11 @@ message("${ALL_SOURCES}")
 # Генерация
 ####################################################
 message("******** Generating started ***********")
-# Зависимости сборки
-# add_dependencies (${PROJECT_NAME} ${LIBS_DEPENCY_NAMES})
-
 # Из найденных исходников выставляем генерацию бинарника
 add_executable(${PROJECT_NAME} ${ALL_HEADERS} ${ALL_SOURCES})
+
+# Зависимости сборки
+add_dependencies (${PROJECT_NAME} ${LIBS_DEPENCY_NAMES})
 
 # Библиотеки, с которыми будем ликовать
 target_link_libraries (${PROJECT_NAME} ${LIBS_LINK_NAMES} ${SYSTEM_LIBS})
