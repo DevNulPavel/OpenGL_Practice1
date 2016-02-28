@@ -37,12 +37,12 @@ include("CMake/Helpers.cmake")
 
 # Если у нас есть компилятор clang на юникс - используем его
 if (UNIX)
-	execute_process(COMMAND "which clang" OUTPUT_VARIABLE CLANG_PATH)
-	execute_process(COMMAND "which clang++" OUTPUT_VARIABLE CLANGXX_PATH)
-	if(NOT (${CLANG_PATH} STREQUAL ""))
-		set(CMAKE_C_COMPILER ${CLANG_PATH})
-		set(CMAKE_CXX_COMPILER ${CLANGXX_PATH})
-	endif()
+	execute_process(COMMAND which clang OUTPUT_VARIABLE CLANG_PATH)
+	execute_process(COMMAND which clang++ OUTPUT_VARIABLE CLANGXX_PATH)
+	# if(NOT ("${CLANG_PATH}" STREQUAL ""))
+		set(CMAKE_C_COMPILER "clang")
+		set(CMAKE_CXX_COMPILER "clang++")
+	# endif()
 endif()
 
 # Инициализация проекта
