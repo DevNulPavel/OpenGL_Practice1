@@ -1,93 +1,74 @@
-//========================================================================
-// Simple GLFW example
-// Copyright (c) Camilla Berglund <elmindreda@elmindreda.org>
-//
-// This software is provided 'as-is', without any express or implied
-// warranty. In no event will the authors be held liable for any damages
-// arising from the use of this software.
-//
-// Permission is granted to anyone to use this software for any purpose,
-// including commercial applications, and to alter it and redistribute it
-// freely, subject to the following restrictions:
-//
-// 1. The origin of this software must not be misrepresented; you must not
-//    claim that you wrote the original software. If you use this software
-//    in a product, an acknowledgment in the product documentation would
-//    be appreciated but is not required.
-//
-// 2. Altered source versions must be plainly marked as such, and must not
-//    be misrepresented as being the original software.
-//
-// 3. This notice may not be removed or altered from any source
-//    distribution.
-//
-//========================================================================
-//! [code]
-
-#include <GLFW/glfw3.h>
-
-#include <stdlib.h>
+//#define GLFW_INCLUDE_GL3
+//#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
+#include <functional>
+#include <thread>
 #include <stdio.h>
+#include <GL/glew.h>
+#include <GL/gl.h>
+#include <GLFW/glfw3.h>
+#include <glm.hpp>
 
-static void error_callback(int error, const char* description)
-{
+static void error_callback(int error, const char* description) {
     fputs(description, stderr);
 }
 
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-int main(void)
-{
+int main(void) {
+
+    // окно
     GLFWwindow* window = 0;
 
+    // обработчик ошибок
     glfwSetErrorCallback(error_callback);
 
+    // инициализация GLFW
     if (!glfwInit())
         exit(EXIT_FAILURE);
 
+    // создание окна
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-    if (!window)
-    {
+    if (!window) {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
 
+    const unsigned char* version = glGetString(GL_VERSION);
+    printf("OpenGL version = %s\n", version);
+
+    glfwDefaultWindowHints();
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
+    // Обработка клавиш
     glfwSetKeyCallback(window, key_callback);
 
-    while (!glfwWindowShouldClose(window))
-    {
-        float ratio;
-        int width, height;
+    // оотношение сторон
+    float ratio = 1.0;
+    int width = 0;
+    int height = 0;
 
-        glfwGetFramebufferSize(window, &width, &height);
-        ratio = width / (float) height;
+    // получаем соотношение сторон
+    glfwGetFramebufferSize(window, &width, &height);
+    ratio = width / (float) height;
 
-        glViewport(0, 0, width, height);
+    // задаем отображение
+    glViewport(0, 0, width, height);
+
+    while (!glfwWindowShouldClose(window)){
+
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-        glMatrixMode(GL_MODELVIEW);
-
-        glLoadIdentity();
-        glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
-
-        glBegin(GL_TRIANGLES);
-        glColor3f(1.f, 0.f, 0.f);
-        glVertex3f(-0.6f, -0.4f, 0.f);
-        glColor3f(0.f, 1.f, 0.f);
-        glVertex3f(0.6f, -0.4f, 0.f);
-        glColor3f(0.f, 0.f, 1.f);
-        glVertex3f(0.f, 0.6f, 0.f);
-        glEnd();
+        // ТУТ рендеринг
+//        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

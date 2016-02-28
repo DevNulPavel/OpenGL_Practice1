@@ -1,31 +1,36 @@
 set(PROJECT_NAME "OpenGL_Practice1")
+set(EXECUTABLE_NAME "OpenGLBin")
 # Конфиги флагов компиляции
 set(PROJECT_C_FLAGS "-O0 -Wall -g")			# Проектные флаги компиляции для C
 set(PROJECT_CXX_FLAGS "-O0 -Wall -g")			# Проектные флаги компиляции для C++
 set(PROJECT_LINK_FLAGS )					# Флаги линковки
 # Пути к исходникам
 set(SRC_FOLDERS 
-	src)
+	src
+)
 # Конфиги используемых библиотек
 set(LIBS_FOLDER libs/)
 set(LIBS_FOLDERS 
 	glm
 	# freeImage
-	glfw)
+	glfw
+)
 set(LIBS_PARAMETERS 
-	)
+)
 set(LIBS_LINK_NAMES
 	glfw
-	# GLFW_LIBRARIES
-	)
+	glm
+)
 set(LIBS_DEPENCY_NAMES
+	# TODO: проверить
 	GLFW
-	# GLFW_LIBRARIES
-	)
+	glm
+)
 set(LIBS_INCLUDE_FOLDERS
-	glm/glm 			# TODO: может можно просто корень
+	glm/glm 			# TODO: может можно просто корень?
 	# freeImage/Source
-	glfw/include)
+	glfw/include
+)
 
 
 ####################################################
@@ -104,7 +109,7 @@ if(APPLE)
 else (UNIX)
 	set (SYSTEM_LIBS 
 		rt Xrandr Xinerama Xi Xxf86vm Xcursor
-		m c dl z GL pthread X11)
+        m c dl z GL GLEW pthread X11)
 else (MSYS)
 	set (SYSTEM_LIBS )
 	# TODO: 
@@ -127,8 +132,8 @@ if(APPLE)
 	set (PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS} -stdlib=libc++")
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 else (UNIX)
-	# set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
-  	# set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
+  	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 else (MSYS)
 	# микрософту не нужен флаг -std=c++11
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /w")
@@ -136,8 +141,8 @@ else (MSYS)
 endif ()
 
 # Флаги компиляции С и C++ из настроек проекта
-set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} ${PROJECT_C_FLAGS})
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${PROJECT_CXX_FLAGS})
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${PROJECT_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PROJECT_CXX_FLAGS}")
 
 # Вывод информации о настройке копиляции (Функция в CMake/Helpers.cmake)
 print_current_cmake_config()
@@ -169,10 +174,10 @@ message("${ALL_SOURCES}")
 ####################################################
 message("******** Generating started ***********")
 # Из найденных исходников выставляем генерацию бинарника
-add_executable(${PROJECT_NAME} ${ALL_HEADERS} ${ALL_SOURCES})
-
-# Зависимости сборки
-add_dependencies (${PROJECT_NAME} ${LIBS_DEPENCY_NAMES})
+add_executable(${EXECUTABLE_NAME} ${ALL_HEADERS} ${ALL_SOURCES})
 
 # Библиотеки, с которыми будем ликовать
-target_link_libraries (${PROJECT_NAME} ${LIBS_LINK_NAMES} ${SYSTEM_LIBS})
+target_link_libraries (${EXECUTABLE_NAME} ${LIBS_LINK_NAMES} ${SYSTEM_LIBS})
+
+# Зависимости сборки
+add_dependencies (${EXECUTABLE_NAME} ${LIBS_DEPENCY_NAMES})
