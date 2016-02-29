@@ -1,6 +1,8 @@
 // TODO: надо ли?
+// #define GLFW_INCLUDE_GLU
 #define GLFW_INCLUDE_GL3
-#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
+#define GLFW_INCLUDE_GLEXT
+//#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
 #include <functional>
 #include <thread>
 #include <stdio.h>
@@ -31,8 +33,8 @@ int main(void) {
     // создание окна
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     if (!window) {
@@ -40,7 +42,6 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
 
-    glfwDefaultWindowHints();
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
@@ -67,7 +68,7 @@ int main(void) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // ТУТ рендеринг
-        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+       GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

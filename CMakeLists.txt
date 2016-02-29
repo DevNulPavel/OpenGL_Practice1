@@ -90,7 +90,10 @@ foreach(LIBRARY_DIR ${LIBS_FOLDERS})
 	message("******** Subproject start ***********")
 	message("Project with path = ${LIBS_FOLDER}${LIBRARY_DIR}")
 	add_subdirectory(${LIBS_FOLDER}${LIBRARY_DIR} ${CMAKE_BINARY_DIR}/libs/${LIBRARY_DIR})
-	message("LIBS = ${GLFW_LIBRARIES}")
+	message("LIBS = ${${LIBRARY_DIR}_LIBRARIES}")
+	message("includes = ${GLFW_INCLUDE_DIRS}")
+	message("libs = ${GLFW_LIBRARIES}")
+	message("pkg = ${GLFW_PKG_LIBS}")
 endforeach()
 
 ####################################################
@@ -106,13 +109,14 @@ if(APPLE)
 else (UNIX)
 	set (SYSTEM_LIBS
 		rt Xrandr Xinerama Xi Xxf86vm Xcursor
-        m c dl z GL GLEW pthread X11)
+        m c dl z GL pthread X11)
 else (MSYS)
 	set (SYSTEM_LIBS )
 	# TODO:
 endif ()
 message("******** System libs list ***********")
 message("${SYSTEM_LIBS}")
+
 
 ####################################################
 # Настройка сборки текущего проекта
