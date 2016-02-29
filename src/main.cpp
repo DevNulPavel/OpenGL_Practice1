@@ -1,10 +1,9 @@
-//#define GLFW_INCLUDE_GL3
-//#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
+// TODO: надо ли?
+#define GLFW_INCLUDE_GL3
+#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
 #include <functional>
 #include <thread>
 #include <stdio.h>
-#include <GL/glew.h>
-#include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm.hpp>
 
@@ -30,10 +29,10 @@ int main(void) {
         exit(EXIT_FAILURE);
 
     // создание окна
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     if (!window) {
@@ -41,12 +40,12 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
 
-    const unsigned char* version = glGetString(GL_VERSION);
-    printf("OpenGL version = %s\n", version);
-
     glfwDefaultWindowHints();
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+
+    const unsigned char* version = glGetString(GL_VERSION);
+    printf("OpenGL version = %s\n", version);
 
     // Обработка клавиш
     glfwSetKeyCallback(window, key_callback);
@@ -68,7 +67,7 @@ int main(void) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // ТУТ рендеринг
-//        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

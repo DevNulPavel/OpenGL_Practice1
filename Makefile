@@ -26,11 +26,19 @@ LINUX:
 	make -j $(JOB_SLOTS_NUMBER) && \
 	cd ../../
 
+OSX:
+	mkdir -p build/OSX && \
+	cd build/OSX &&	\
+	cmake -G "Xcode" ../../ && \
+	open *.xcodeproj && \
+	cd ../../
+
 clean:
 	rm -rf build && \
 	mkdir build && \
 	mkdir -p build/Linux && \
 	mkdir -p build/LinuxQtCreator && \
-	mkdir -p build/LinuxKDevelop
+	mkdir -p build/LinuxKDevelop && \
+	mkdir -p build/OSX
 
 clear: clean

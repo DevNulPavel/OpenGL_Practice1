@@ -5,17 +5,17 @@ set(PROJECT_C_FLAGS "-O0 -Wall -g")			# Проектные флаги компи
 set(PROJECT_CXX_FLAGS "-O0 -Wall -g")			# Проектные флаги компиляции для C++
 set(PROJECT_LINK_FLAGS )					# Флаги линковки
 # Пути к исходникам
-set(SRC_FOLDERS 
+set(SRC_FOLDERS
 	src
 )
 # Конфиги используемых библиотек
 set(LIBS_FOLDER libs/)
-set(LIBS_FOLDERS 
+set(LIBS_FOLDERS
 	glm
 	# freeImage
 	glfw
 )
-set(LIBS_PARAMETERS 
+set(LIBS_PARAMETERS
 )
 set(LIBS_LINK_NAMES
 	glfw
@@ -23,13 +23,14 @@ set(LIBS_LINK_NAMES
 )
 set(LIBS_DEPENCY_NAMES
 	# TODO: проверить
-	GLFW
+	glfw
 	glm
 )
 set(LIBS_INCLUDE_FOLDERS
 	glm/glm 			# TODO: может можно просто корень?
 	# freeImage/Source
 	glfw/include
+    glfw/deps
 )
 
 
@@ -96,23 +97,19 @@ endforeach()
 # Системные библиотеки
 ####################################################
 if(APPLE)
-	set (SYSTEM_LIBS 
+	set (SYSTEM_LIBS
 		"-framework OpenGL"
 		"-framework Cocoa"
 		"-framework IOKit"
-		"-framework CoreAudio"
 		"-framework CoreVideo"
-		"-framework AudioToolbox"
-		"-framework AudioUnit"
-		"-framework AVFoundation"
 		"-ObjC")
 else (UNIX)
-	set (SYSTEM_LIBS 
+	set (SYSTEM_LIBS
 		rt Xrandr Xinerama Xi Xxf86vm Xcursor
         m c dl z GL GLEW pthread X11)
 else (MSYS)
 	set (SYSTEM_LIBS )
-	# TODO: 
+	# TODO:
 endif ()
 message("******** System libs list ***********")
 message("${SYSTEM_LIBS}")
@@ -160,7 +157,8 @@ foreach(DIR ${SRC_FOLDERS})
 	# Формирование групп исходников для красивого отображения в проекте
 	# для имен групп в xcode нужен обратный слэш
 	string(REGEX REPLACE "/" "\\\\" GROUP_NAME ${DIR})
-	source_group("Sources\\${GROUP_NAME}" FILES ${HEADERS} ${SOURCES})
+    # source_group("Sources\\${GROUP_NAME}" FILES ${HEADERS} ${SOURCES})
+	source_group("${GROUP_NAME}" FILES ${HEADERS} ${SOURCES})
 	# сцепляем пути
 	list(APPEND ALL_HEADERS ${HEADERS})
 	list(APPEND ALL_SOURCES ${SOURCES})
