@@ -1,13 +1,14 @@
 // TODO: надо ли?
-// #define GLFW_INCLUDE_GLU
+#define GLFW_INCLUDE_GLU
 #define GLFW_INCLUDE_GL3
 #define GLFW_INCLUDE_GLEXT
 //#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
 #include <functional>
 #include <thread>
 #include <stdio.h>
-#include <GLFW/glfw3.h>
-#include <glm.hpp>
+#include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
+#include <GLFW/glfw3.h>     // Непосредственно сам GLFW
+#include <glm.hpp>          // библиотека графической математики
 
 static void error_callback(int error, const char* description) {
     fputs(description, stderr);
@@ -68,7 +69,7 @@ int main(void) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // ТУТ рендеринг
-       GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

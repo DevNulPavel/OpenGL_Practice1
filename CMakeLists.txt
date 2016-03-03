@@ -19,7 +19,6 @@ set(LIBS_PARAMETERS
 )
 set(LIBS_LINK_NAMES
 	glfw
-	glm
 )
 set(LIBS_DEPENCY_NAMES
 	# TODO: проверить
@@ -92,7 +91,7 @@ foreach(LIBRARY_DIR ${LIBS_FOLDERS})
 	add_subdirectory(${LIBS_FOLDER}${LIBRARY_DIR} ${CMAKE_BINARY_DIR}/libs/${LIBRARY_DIR})
 	message("LIBS = ${${LIBRARY_DIR}_LIBRARIES}")
 	message("includes = ${GLFW_INCLUDE_DIRS}")
-	message("libs = ${GLFW_LIBRARIES}")
+	message("libs = ${GLFW_PKG_DEPS}")
 	message("pkg = ${GLFW_PKG_LIBS}")
 endforeach()
 
@@ -109,7 +108,7 @@ if(APPLE)
 else (UNIX)
 	set (SYSTEM_LIBS
 		rt Xrandr Xinerama Xi Xxf86vm Xcursor
-        m c dl z GL pthread X11)
+        m c dl z GL GLEW pthread X11)
 else (MSYS)
 	set (SYSTEM_LIBS )
 	# TODO:
@@ -178,8 +177,8 @@ message("******** Generating started ***********")
 # Из найденных исходников выставляем генерацию бинарника
 add_executable(${EXECUTABLE_NAME} ${ALL_HEADERS} ${ALL_SOURCES})
 
-# Библиотеки, с которыми будем ликовать
-target_link_libraries (${EXECUTABLE_NAME} ${LIBS_LINK_NAMES} ${SYSTEM_LIBS})
-
 # Зависимости сборки
 add_dependencies (${EXECUTABLE_NAME} ${LIBS_DEPENCY_NAMES})
+
+# Библиотеки, с которыми будем ликовать
+target_link_libraries (${EXECUTABLE_NAME} ${LIBS_LINK_NAMES} ${SYSTEM_LIBS})
