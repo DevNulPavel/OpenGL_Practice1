@@ -107,6 +107,10 @@ int main(void) {
     glAttachShader (shader_program, vs);
     glLinkProgram (shader_program);
     checkOpenGLerror();
+    
+    // аттрибуты шейдера
+    const char* attr_name = "vp";
+    int attrib = glGetAttribLocation(shader_program, attr_name);
 
     float points[] = {
        0.0f,  0.5f,  0.0f,
@@ -123,11 +127,9 @@ int main(void) {
     GLuint vao = 0;
     glGenVertexArrays (1, &vao);
     glBindVertexArray (vao);
-    const char* attr_name = "vp";
-    int attrib = glGetAttribLocation(shader_program, attr_name);
     glEnableVertexAttribArray(attrib);
     glBindBuffer (GL_ARRAY_BUFFER, vbo);
-    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer (attrib, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     glBindVertexArray(0);
     checkOpenGLerror();
 
