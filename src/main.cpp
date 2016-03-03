@@ -2,7 +2,7 @@
 #define GLFW_INCLUDE_GLU
 #define GLFW_INCLUDE_GL3
 #define GLFW_INCLUDE_GLEXT
-#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
+// #define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
 #include <functional>
 #include <thread>
 #include <stdio.h>
@@ -82,16 +82,20 @@ int main(void) {
 
     
     const char* vertex_shader =
-    "#version 110\n"
-    "attribute vec3 vp;"
+    "#version 120\n"
+    "attribute vec3 aPos;"
+    "attribute vec3 aColor;"
+    "varying vec3 vColor;"
     "void main () {"
-    "   gl_Position = vec4 (vp, 1.0);"
+    "   gl_Position = vec4(aPos, 1.0);"
+    "   vColor = aColor;"
     "}";
     
     const char* fragment_shader =
-    "#version 110\n"
+    "#version 120\n"
+    "varying vec3 vColor;"
     "void main () {"
-    "  gl_FragColor = vec4 (0.5, 0.0, 0.5, 1.0);"
+    "  gl_FragColor = vec4(vColor, 1.0);"
     "}";
     
     GLuint vs = glCreateShader (GL_VERTEX_SHADER);
@@ -109,27 +113,46 @@ int main(void) {
     checkOpenGLerror();
     
     // аттрибуты шейдера
-    const char* attr_name = "vp";
-    int attrib = glGetAttribLocation(shader_program, attr_name);
+    int posAttrib = glGetAttribLocation(shader_program, "aPos");
+    int colorAttrib = glGetAttribLocation(shader_program, "aColor");
 
+    // данные о вершинах
     float points[] = {
        0.0f,  0.5f,  0.0f,
        -0.5f, 0.5f,  0.0f,
        -0.5f, -0.5f,  0.0f
     };
-
-    GLuint vbo = 0;
-    glGenBuffers (1, &vbo);
-    glBindBuffer (GL_ARRAY_BUFFER, vbo);
-    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof (float), points, GL_STATIC_DRAW);
+    GLuint posVBO = 0;
+    glGenBuffers (1, &posVBO);
+    glBindBuffer (GL_ARRAY_BUFFER, posVBO);
+    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof(float), points, GL_STATIC_DRAW);
     checkOpenGLerror();
 
+    // данные о цветах
+    float colors[] = {
+       0.0f,  0.5f,  0.0f,
+       0.5f, 0.5f,  0.0f,
+       0.5f, 0.5f,  1.0f
+    };
+    GLuint colorVBO = 0;
+    glGenBuffers (1, &colorVBO);
+    glBindBuffer (GL_ARRAY_BUFFER, colorVBO);
+    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof(float), colors, GL_STATIC_DRAW);
+    checkOpenGLerror();
+
+    // VAO
     GLuint vao = 0;
     glGenVertexArrays (1, &vao);
     glBindVertexArray (vao);
-    glEnableVertexAttribArray(attrib);
-    glBindBuffer (GL_ARRAY_BUFFER, vbo);
-    glVertexAttribPointer (attrib, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    // Позиции
+    glBindBuffer(GL_ARRAY_BUFFER, posVBO);
+    glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    // Цвет вершин
+    glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
+    glEnableVertexAttribArray(colorAttrib);
+    glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    // off
     glBindVertexArray(0);
     checkOpenGLerror();
 
