@@ -10,6 +10,11 @@
 #include <GLFW/glfw3.h>     // Непосредственно сам GLFW
 #include <glm.hpp>          // библиотека графической математики
 
+
+// Документация
+// https://www.opengl.org/sdk/docs/man/html/
+
+
 static void error_callback(int error, const char* description) {
     printf("OpenGL error = %d\n description = %s\n\n", error, description);
 }
@@ -115,15 +120,16 @@ int main(void) {
     glBufferData (GL_ARRAY_BUFFER, 9 * sizeof (float), points, GL_STATIC_DRAW);
     checkOpenGLerror();
 
-//    GLuint vao = 0;
-//    glGenVertexArrays (1, &vao);
-//    glBindVertexArray (vao);
+    GLuint vao = 0;
+    glGenVertexArrays (1, &vao);
+    glBindVertexArray (vao);
     const char* attr_name = "vp";
     int attrib = glGetAttribLocation(shader_program, attr_name);
     glEnableVertexAttribArray(attrib);
-//    glBindBuffer (GL_ARRAY_BUFFER, vbo);
-//    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-//    checkOpenGLerror();
+    glBindBuffer (GL_ARRAY_BUFFER, vbo);
+    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glBindVertexArray(0);
+    checkOpenGLerror();
 
     while (!glfwWindowShouldClose(window)){
 
@@ -132,26 +138,27 @@ int main(void) {
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram (shader_program);
         
-        // ! Включаем массив атрибутов
-        const char* attr_name = "vp";
-        int attrib = glGetAttribLocation(shader_program, attr_name);
-        glEnableVertexAttribArray(attrib);
-        // ! Подключаем VBO
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        // ! Указывая pointer 0 при подключенном буфере, мы указываем, что данные представлены в VBO
-        glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-        // ! Передаем данные на видеокарту (рисуем)
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        // ! Отключаем VBO
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        
-        // ! Отключаем массив атрибутов
-        glDisableVertexAttribArray(attrib);
+//        // ! Включаем массив атрибутов
+//        const char* attr_name = "vp";
+//        int attrib = glGetAttribLocation(shader_program, attr_name);
+//        glEnableVertexAttribArray(attrib);
+//        // ! Подключаем VBO
+//        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+//        // ! Указывая pointer 0 при подключенном буфере, мы указываем, что данные представлены в VBO
+//        glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+//        // ! Передаем данные на видеокарту (рисуем)
+//        glDrawArrays(GL_TRIANGLES, 0, 3);
+//        // ! Отключаем VBO
+//        glBindBuffer(GL_ARRAY_BUFFER, 0);
+//        
+//        // ! Отключаем массив атрибутов
+//        glDisableVertexAttribArray(attrib);
 
         
-//        glBindVertexArray (vao);
+        glBindVertexArray(vao);
         // draw points 0-3 from the currently bound VAO with current in-use shader
-//        glDrawArrays (GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(0);
 
         checkOpenGLerror();
 
