@@ -12,6 +12,7 @@ set(SRC_FOLDERS
 set(LIBS_FOLDER libs/)
 set(LIBS_FOLDERS
 	glm
+    glew
 	# freeImage
 	glfw
 )
@@ -19,15 +20,18 @@ set(LIBS_PARAMETERS
 )
 set(LIBS_LINK_NAMES
 	glfw
+    glew
 )
 set(LIBS_DEPENCY_NAMES
 	# TODO: проверить
 	glfw
+    glew
 	glm
 )
 set(LIBS_INCLUDE_FOLDERS
 	glm/glm 			# TODO: может можно просто корень?
 	# freeImage/Source
+    glew/include
 	glfw/include
     glfw/deps
 )
@@ -108,7 +112,7 @@ if(APPLE)
 else (UNIX)
 	set (SYSTEM_LIBS
 		rt Xrandr Xinerama Xi Xxf86vm Xcursor
-        m c dl z GL GLEW pthread X11)
+        m c dl z GL pthread X11)
 else (MSYS)
 	set (SYSTEM_LIBS )
 	# TODO:

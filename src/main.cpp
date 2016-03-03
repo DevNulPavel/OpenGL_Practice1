@@ -2,7 +2,7 @@
 #define GLFW_INCLUDE_GLU
 #define GLFW_INCLUDE_GL3
 #define GLFW_INCLUDE_GLEXT
-//#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
+#define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
 #include <functional>
 #include <thread>
 #include <stdio.h>
@@ -11,12 +11,19 @@
 #include <glm.hpp>          // библиотека графической математики
 
 static void error_callback(int error, const char* description) {
-    fputs(description, stderr);
+    printf("OpenGL error = %d\n description = %s\n\n", error, description);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
+}
+
+static void checkOpenGLerror() {
+    GLenum errCode = GL_NO_ERROR;
+    if((errCode=glGetError()) != GL_NO_ERROR){
+        printf("OpenGl error! %d - %s\n", errCode, glewGetErrorString(errCode));
+    }
 }
 
 int main(void) {
@@ -45,6 +52,10 @@ int main(void) {
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+    
+    // инициализация расширений
+    glewExperimental = GL_TRUE;
+    glewInit();
 
     const unsigned char* version = glGetString(GL_VERSION);
     printf("OpenGL version = %s\n", version);
@@ -64,62 +75,93 @@ int main(void) {
     // задаем отображение
     glViewport(0, 0, width, height);
 
+    
+    const char* vertex_shader =
+    "#version 110\n"
+    "attribute vec3 vp;"
+    "void main () {"
+    "   gl_Position = vec4 (vp, 1.0);"
+    "}";
+    
+    const char* fragment_shader =
+    "#version 110\n"
+    "void main () {"
+    "  gl_FragColor = vec4 (0.5, 0.0, 0.5, 1.0);"
+    "}";
+    
+    GLuint vs = glCreateShader (GL_VERTEX_SHADER);
+    glShaderSource (vs, 1, &vertex_shader, NULL);
+    glCompileShader (vs);
+    GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
+    glShaderSource (fs, 1, &fragment_shader, NULL);
+    glCompileShader (fs);
+    checkOpenGLerror();
+    
+    GLuint shader_program = glCreateProgram ();
+    glAttachShader (shader_program, fs);
+    glAttachShader (shader_program, vs);
+    glLinkProgram (shader_program);
+    checkOpenGLerror();
+
     float points[] = {
        0.0f,  0.5f,  0.0f,
-       0.5f, -0.5f,  0.0f,
-      -0.5f, -0.5f,  0.0f
+       -0.5f, 0.5f,  0.0f,
+       -0.5f, -0.5f,  0.0f
     };
 
-//    GLuint vbo = 0;
-//    glGenBuffers (1, &vbo);
-//    glBindBuffer (GL_ARRAY_BUFFER, vbo);
-//    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof (float), points, GL_STATIC_DRAW);
+    GLuint vbo = 0;
+    glGenBuffers (1, &vbo);
+    glBindBuffer (GL_ARRAY_BUFFER, vbo);
+    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof (float), points, GL_STATIC_DRAW);
+    checkOpenGLerror();
 
 //    GLuint vao = 0;
 //    glGenVertexArrays (1, &vao);
 //    glBindVertexArray (vao);
-//    glEnableVertexAttribArray (0);
+    const char* attr_name = "vp";
+    int attrib = glGetAttribLocation(shader_program, attr_name);
+    glEnableVertexAttribArray(attrib);
 //    glBindBuffer (GL_ARRAY_BUFFER, vbo);
 //    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-//    const char* vertex_shader =
-//    "#version 120\n"
-//    "in vec3 vp;"
-//    "void main () {"
-//    "   gl_Position = vec4 (vp, 1.0);"
-//    "}";
-
-//    const char* fragment_shader =
-//    "#version 120\n"
-//    "out vec4 frag_colour;"
-//    "void main () {"
-//    "  frag_colour = vec4 (0.5, 0.0, 0.5, 1.0);"
-//    "}";
-
-//    GLuint vs = glCreateShader (GL_VERTEX_SHADER);
-//    glShaderSource (vs, 1, &vertex_shader, NULL);
-//    glCompileShader (vs);
-//    GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
-//    glShaderSource (fs, 1, &fragment_shader, NULL);
-//    glCompileShader (fs);
-
-//    GLuint shader_program = glCreateProgram ();
-//    glAttachShader (shader_program, fs);
-//    glAttachShader (shader_program, vs);
-//    glLinkProgram (shader_program);
+//    checkOpenGLerror();
 
     while (!glfwWindowShouldClose(window)){
 
         // wipe the drawing surface clear
+        glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//        glUseProgram (shader_program);
+        glUseProgram (shader_program);
+        
+        // ! Включаем массив атрибутов
+        const char* attr_name = "vp";
+        int attrib = glGetAttribLocation(shader_program, attr_name);
+        glEnableVertexAttribArray(attrib);
+        // ! Подключаем VBO
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        // ! Указывая pointer 0 при подключенном буфере, мы указываем, что данные представлены в VBO
+        glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        // ! Передаем данные на видеокарту (рисуем)
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // ! Отключаем VBO
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        
+        // ! Отключаем массив атрибутов
+        glDisableVertexAttribArray(attrib);
+
+        
 //        glBindVertexArray (vao);
         // draw points 0-3 from the currently bound VAO with current in-use shader
 //        glDrawArrays (GL_TRIANGLES, 0, 3);
 
+        checkOpenGLerror();
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+//    glDeleteProgram(shader_program);
+//    glDeleteBuffers(1, &vbo);
+//    glDeleteVertexArrays(1, &vao);
 
     glfwDestroyWindow(window);
 
