@@ -118,40 +118,40 @@ int main(void) {
 
     // данные о вершинах
     float points[] = {
-       0.0f,  0.5f,  0.0f,
-       -0.5f, 0.5f,  0.0f,
-       -0.5f, -0.5f,  0.0f
+       0.0f,  0.5f,  0.0f,          0.0f,  0.5f,  0.0f,
+       -0.5f, 0.5f,  0.0f,          0.5f, 0.5f,  0.0f,
+       -0.5f, -0.5f,  0.0f,         0.5f, 0.5f,  1.0f
     };
-    GLuint posVBO = 0;
-    glGenBuffers (1, &posVBO);
-    glBindBuffer (GL_ARRAY_BUFFER, posVBO);
-    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof(float), points, GL_STATIC_DRAW);
+    GLuint VBO = 0;
+    glGenBuffers (1, &VBO);
+    glBindBuffer (GL_ARRAY_BUFFER, VBO);
+    glBufferData (GL_ARRAY_BUFFER, 18 * sizeof(float), points, GL_STATIC_DRAW);
     checkOpenGLerror();
 
     // данные о цветах
-    float colors[] = {
-       0.0f,  0.5f,  0.0f,
-       0.5f, 0.5f,  0.0f,
-       0.5f, 0.5f,  1.0f
-    };
-    GLuint colorVBO = 0;
-    glGenBuffers (1, &colorVBO);
-    glBindBuffer (GL_ARRAY_BUFFER, colorVBO);
-    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof(float), colors, GL_STATIC_DRAW);
-    checkOpenGLerror();
+//    float colors[] = {
+//        0.0f,  0.5f,  0.0f,
+//        0.5f, 0.5f,  0.0f,
+//        0.5f, 0.5f,  1.0f
+//    };
+//    GLuint colorVBO = 0;
+//    glGenBuffers (1, &colorVBO);
+//    glBindBuffer (GL_ARRAY_BUFFER, colorVBO);
+//    glBufferData (GL_ARRAY_BUFFER, 18 * sizeof(float), points, GL_STATIC_DRAW);
+//    checkOpenGLerror();
 
     // VAO
     GLuint vao = 0;
     glGenVertexArrays (1, &vao);
     glBindVertexArray (vao);
-    // Позиции
-    glBindBuffer(GL_ARRAY_BUFFER, posVBO);
+    // 6*sizeof(float) - размер блока информации о вершине
+    // (void*)(sizeof(float)*3) - смещение от начала
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(sizeof(float)*0));
     // Цвет вершин
-    glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
     glEnableVertexAttribArray(colorAttrib);
-    glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(sizeof(float)*3));
     // off
     glBindVertexArray(0);
     checkOpenGLerror();
@@ -184,8 +184,6 @@ int main(void) {
         // draw points 0-3 from the currently bound VAO with current in-use shader
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
-
-        checkOpenGLerror();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
