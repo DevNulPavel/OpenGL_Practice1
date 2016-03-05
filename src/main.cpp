@@ -3,19 +3,21 @@
 #define GLFW_INCLUDE_GL3
 #define GLFW_INCLUDE_GLEXT
 // #define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
-#include <functional>
-#include <thread>
+#include <string>
 #include <stdio.h>
 #include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
 #include <GLFW/glfw3.h>     // Непосредственно сам GLFW
 #include <glm.hpp>          // библиотека графической математики
 #include <gtc/type_ptr.hpp>
 #include <gtc/matrix_transform.hpp>
+#include <png.h>
 
 // Документация
 // https://www.opengl.org/sdk/docs/man/html/
 
+using namespace std;
 using namespace glm;
+
 
 // вычисление смещения в структуре/классе
 #define OFFSETOF(TYPE, FIELD) ((void*)&(((TYPE*)NULL)->FIELD))
@@ -51,6 +53,10 @@ static void checkOpenGLerror() {
     if((errCode=glGetError()) != GL_NO_ERROR){
         printf("OpenGl error! %d - %s\n", errCode, glewGetErrorString(errCode));
     }
+}
+
+void loadImage(const string& path){
+
 }
 
 int main(void) {

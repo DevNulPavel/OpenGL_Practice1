@@ -1,9 +1,5 @@
 set(PROJECT_NAME "OpenGL_Practice1")
 set(EXECUTABLE_NAME "OpenGLBin")
-# Конфиги флагов компиляции
-set(PROJECT_C_FLAGS "-O0 -Wall -g")			# Проектные флаги компиляции для C
-set(PROJECT_CXX_FLAGS "-O0 -Wall -g")			# Проектные флаги компиляции для C++
-set(PROJECT_LINK_FLAGS )					# Флаги линковки
 # Пути к исходникам
 set(SRC_FOLDERS
 	src
@@ -13,24 +9,27 @@ set(LIBS_FOLDER libs/)
 set(LIBS_FOLDERS
 	glm
     glew
-	# freeImage
+    zlib
+	libpng
 	glfw
-)
-set(LIBS_PARAMETERS
 )
 set(LIBS_LINK_NAMES
 	glfw
     glew
+    zlibstatic
+    png16_static
 )
 set(LIBS_DEPENCY_NAMES
-	# TODO: проверить
+	zlib
+	libpng
 	glfw
     glew
 	glm
 )
 set(LIBS_INCLUDE_FOLDERS
 	glm/glm 			# TODO: может можно просто корень?
-	# freeImage/Source
+	zlib
+	libpng
     glew/include
 	glfw/include
     glfw/deps
@@ -69,6 +68,9 @@ if (UNIX)
 		message("-> Clang will used for compilation")
 		set(CMAKE_C_COMPILER "clang")
 		set(CMAKE_CXX_COMPILER "clang++")
+		# Скрываем ворнинги на clang + цвета
+		set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Qunused-arguments -fcolor-diagnostics")
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -fcolor-diagnostics")
 	endif(CLANG_FOUND)
 	message("**********************************")
 endif()
@@ -93,10 +95,10 @@ foreach(LIBRARY_DIR ${LIBS_FOLDERS})
 	message("******** Subproject start ***********")
 	message("Project with path = ${LIBS_FOLDER}${LIBRARY_DIR}")
 	add_subdirectory(${LIBS_FOLDER}${LIBRARY_DIR} ${CMAKE_BINARY_DIR}/libs/${LIBRARY_DIR})
-	message("LIBS = ${${LIBRARY_DIR}_LIBRARIES}")
-	message("includes = ${GLFW_INCLUDE_DIRS}")
-	message("libs = ${GLFW_PKG_DEPS}")
-	message("pkg = ${GLFW_PKG_LIBS}")
+	# message("LIBS = ${${LIBRARY_DIR}_LIBRARIES}")
+	# message("includes = ${GLFW_INCLUDE_DIRS}")
+	# message("libs = ${GLFW_PKG_DEPS}")
+	# message("pkg = ${GLFW_PKG_LIBS}")
 endforeach()
 
 ####################################################
@@ -133,15 +135,16 @@ endif ()
 # Не кастомные флаги компиляции
 if(APPLE)
 	# TODO: пробросить линковку
-	set (PROJECT_LINK_FLAGS "${PROJECT_LINK_FLAGS} -stdlib=libc++")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+	set (PROJECT_LINK_FLAGS "-stdlib=libc++")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -g -stdlib=libc++")
 else (UNIX)
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
-  	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=c++11 -Wno-error=unused-command-line-argument")
+  	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -g -std=c++11 -Wno-error=unused-command-line-argument")
 else (MSYS)
 	# микрософту не нужен флаг -std=c++11
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /w")
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /w")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O0 /g /Wall")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O0 /g /Wall")
 endif ()
 
 # Флаги компиляции С и C++ из настроек проекта

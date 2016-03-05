@@ -43,6 +43,6 @@ add_definitions (-DGLEW_NO_GLU)
 
 include_directories (${GLEW_DIR}/include)
 
-add_library (glew SHARED ${GLEW_DIR}/src/glew.c)
+add_library (glew STATIC ${GLEW_DIR}/src/glew.c)
 set_target_properties (glew PROPERTIES COMPILE_DEFINITIONS "GLEW_BUILD" OUTPUT_NAME "${GLEW_LIB_NAME}" PREFIX "${DLL_PREFIX}")
 target_link_libraries (glew ${GLEW_LIBRARIES})
