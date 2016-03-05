@@ -62,8 +62,9 @@ int main(void) {
     glfwSetErrorCallback(error_callback);
 
     // инициализация GLFW
-    if (!glfwInit())
+    if (!glfwInit()){
         exit(EXIT_FAILURE);
+    }
 
     // создание окна
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
@@ -78,8 +79,9 @@ int main(void) {
     }
 
     glfwMakeContextCurrent(window);
+    // вертикальная синхронизация
     glfwSwapInterval(1);
-    
+
     // инициализация расширений
     glewExperimental = GL_TRUE;
     glewInit();
@@ -101,28 +103,69 @@ int main(void) {
 
     // Шейдеры
     const char* vertexShader = STRINGIFY_SHADER(
+        // vertex attribute
         attribute vec3 aPos;
         attribute vec3 aNormal;
         attribute vec3 aColor;
         attribute vec3 aTexCoord;
-
+        // uniforms
+        uniform mat4 uModelViewMat;
+        uniform mat4 uNormalMat;
         uniform mat4 uModelViewProjMat;
-
+        // output
+        varying vec3 vPosViewSpace;
+        varying vec3 vNormalViewSpace;
         varying vec3 vColor;
         varying vec3 vTexCoord;
 
         void main () {
-            gl_Position = uModelViewProjMat * vec4(aPos, 1.0);
+            vec4 vertexVec4 = vec4(aPos, 1.0);      // последняя компонента 1, тк это точка
+            vec4 normalVec4 = vec4(aNormal, 0.0);   // последняя компонента 0, тк это направление
+            // вычисляем позицию точки в пространстве OpenGL
+            gl_Position = uModelViewProjMat * vertexVec4;
+            // вычисляем позицию и нормаль в пространстве камеры
+            vPosViewSpace = vec3(uModelViewMat * vertexVec4);                   // это вершина, учитывается перенос и тд
+            vNormalViewSpace = normalize(vec3(uNormalMat * normalVec4));    // так как это направление, учитывается поворот только
+            // цвет и текстурные координаты просто пробрасываем для интерполяции
             vColor = aColor;
             vTexCoord = aTexCoord;
         }
     );
     const char* fragmentShader = STRINGIFY_SHADER(
+        varying vec3 vPosViewSpace;
+        varying vec3 vNormalViewSpace;
         varying vec3 vColor;
         varying vec3 vTexCoord;
 
+        uniform vec3 uLightPosViewSpace;
+
+        const float ambientCoef = 0.1;
+        const float diffuseCoef = 0.5;
+        const float specularCoeff = 0.1;
+        const float specularShinnes = 1.0;  // >0
+
         void main () {
-            gl_FragColor = vec4(vColor, 1.0);
+            vec3 fromTexelToLightDir = normalize(uLightPosViewSpace - vPosViewSpace);
+            vec3 fromTexelToEyesDir = normalize(-vPosViewSpace);
+            vec3 texelLightReflectionDir = normalize(reflect(-fromTexelToLightDir, vNormalViewSpace));
+
+            // Диффузное
+            // на сколкьо сильно совпадает направление нормали и направления к свету
+            float diffusePower = diffuseCoef * max(dot(vNormalViewSpace, fromTexelToLightDir), 0.0);
+
+            // Блики
+            // Степень того, как сильно совпадает направление отражения света и направление в камеру
+            float specularDot = max(dot(texelLightReflectionDir, fromTexelToEyesDir), 0.0);
+            float specularPower = 0.0;
+            // проверка, так как 0 в любой степени - это 1.0
+            if(specularDot > 0.0){
+               specularPower = pow(specularDot, specularShinnes);
+               specularPower = clamp(specularPower, 0.0, 1.0);
+            }
+
+            float lightPower = ambientCoef + diffusePower + specularPower;
+
+            gl_FragColor = vec4(lightPower, lightPower, lightPower, 1.0);
         }
     );
     
@@ -148,17 +191,43 @@ int main(void) {
 
     // юниформы шейдера
     int modelViewProjMatrixLocation = glGetUniformLocation(shaderProgram, "uModelViewProjMat");
+    int modelViewMatrixLocation = glGetUniformLocation(shaderProgram, "uModelViewMat");
+    int normalMatrixLocation = glGetUniformLocation(shaderProgram, "uNormalMat");
+    int lightPosViewSpaceLocation = glGetUniformLocation(shaderProgram, "uLightPosViewSpace");
 
     // данные о вершинах
+    int vertexCount = 18;
     Vertex points[] = {
-        Vertex(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  0.0f), vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(1.0f, -1.0f,  0.0f), vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f))
+        //              ВЕРШИНА                     НОРМАЛЬ                 ЦВЕТ                ТЕКСТУРНЫЕ_КООРДИНАТЫ
+        // первая грань, передняя
+        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        // вторая, правая
+        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        // третья, задняя
+        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        // четвертая, левая
+        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        // пятая, низ пирамиды 1
+        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        // шестая, низ пирамиды 2
+        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f))
     };
     GLuint VBO = 0;
     glGenBuffers (1, &VBO);
     glBindBuffer (GL_ARRAY_BUFFER, VBO);
-    glBufferData (GL_ARRAY_BUFFER, 3 * sizeof(Vertex), points, GL_STATIC_DRAW);
+    glBufferData (GL_ARRAY_BUFFER, vertexCount * sizeof(Vertex), points, GL_STATIC_DRAW);
     checkOpenGLerror();
 
     // VAO
@@ -184,13 +253,14 @@ int main(void) {
     glBindVertexArray(0);
     checkOpenGLerror();
 
+    // позиция света в мировых координатах
+    vec3 lightPosWorldSpace = vec3(0.0, 0.0, 5.0);
+
     // вид
     mat4 viewMatrix = lookAt(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 1.0, 0.0));
     // Матрица проекции
     float ratio = float(width) / float(height);
     mat4 projectionMatrix = perspective(glm::radians(45.0f), ratio, 0.1f, 100.0f);
-
-    float angle = 0.0;
 
     // отключаем отображение задней части полигонов
     glEnable(GL_CULL_FACE);
@@ -200,37 +270,66 @@ int main(void) {
     // задняя часть будет отбрасываться
     glFrontFace(GL_CCW);
 
+    // проверка глубины
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    float angle = 0.0;
+    // текущее время
+    double time = glfwGetTime();
+
     while (!glfwWindowShouldClose(window)){
+        // приращение времени
+        double newTime = glfwGetTime();
+        double timeDelta = newTime - time;
+        time = newTime;
 
         // wipe the drawing surface clear
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram (shaderProgram);
 
-        // Вращаем
-        angle += 0.05;
+        // Вращаем на 5ть градусов
+        angle += timeDelta * 5.0f;
         mat4 modelMatrix = mat4(1.0);
         // Здесь тоже обратный порядок умножения матриц
         modelMatrix = translate(modelMatrix, vec3(0.0f, 0.0f, -10.0f));
-        modelMatrix = rotate(modelMatrix, float(angle/M_PI), vec3(0.0f, 1.0f, 0.0f));
+        modelMatrix = rotate(modelMatrix, float(angle/M_PI/2.0), vec3(1.0f, 1.0f, 0.0f));
 
-        // выставляем матрицу трансформации
+        // матрица модели-камеры
+        mat4 modelViewMatrix = viewMatrix * modelMatrix;
+
+        // TODO: Вроде бы можно просто матрицу модели?
+        // матрица трансформации нормалей
+        mat4 normalMatrix = transpose(inverse(modelViewMatrix));
+
+        // матрица модель-вид-проекция
         mat4 modelViewProjMatrix = projectionMatrix * viewMatrix * modelMatrix;
+
+        // позиция света в координатах камеры
+        vec3 lightPosViewSpace = vec3(viewMatrix * vec4(lightPosWorldSpace, 1.0));
+
+        // выставляем матрицу трансформа в координаты камеры
+        glUniformMatrix4fv(modelViewMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
+        // выставляем матрицу трансформа нормалей
+        glUniformMatrix4fv(normalMatrixLocation, 1, false, glm::value_ptr(normalMatrix));
+        // выставляем матрицу трансформации в пространство OpenGL
         glUniformMatrix4fv(modelViewProjMatrixLocation, 1, false, glm::value_ptr(modelViewProjMatrix));
+        // выставляем позицию света в координатах камеры
+        glUniform3f(lightPosViewSpaceLocation, lightPosViewSpace.x, lightPosViewSpace.y, lightPosViewSpace.z);
 
         // рисуем
         glBindVertexArray(vao);
-        // draw points 0-3 from the currently bound VAO with current in-use shader
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, vertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-//    glDeleteProgram(shaderProgram);
-//    glDeleteBuffers(1, &vbo);
-//    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(shaderProgram);
+    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &vao);
 
     glfwDestroyWindow(window);
 
