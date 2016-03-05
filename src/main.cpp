@@ -112,7 +112,7 @@ int main(void) {
         varying vec3 vTexCoord;
 
         void main () {
-            gl_Position = vec4(aPos, 1.0);
+            gl_Position = uModelViewProjMat * vec4(aPos, 1.0);
             vColor = aColor;
             vTexCoord = aTexCoord;
         }
@@ -151,9 +151,9 @@ int main(void) {
 
     // данные о вершинах
     Vertex points[] = {
-        Vertex(vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-0.5f, 0.5f,  0.0f), vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-0.5f, -0.5f,  0.0f), vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f))
+        Vertex(vec3(0.0f, 1.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  0.0f), vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(1.0f, -1.0f,  0.0f), vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f))
     };
     GLuint VBO = 0;
     glGenBuffers (1, &VBO);
@@ -184,13 +184,21 @@ int main(void) {
     glBindVertexArray(0);
     checkOpenGLerror();
 
-    // Текущие матрицы
-    mat4 modelMatrix = mat4(1.0f);
     // вид
-    mat4 viewMatrix = glm::translate(mat4(0.0), vec3(0.0f, 0.0f, -10.0f));
+    mat4 viewMatrix = lookAt(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 1.0, 0.0));
     // Матрица проекции
     float ratio = float(width) / float(height);
-    mat4 projectionMatrix = perspective(glm::radians(30.0f), ratio, 0.1f, 100.0f);
+    mat4 projectionMatrix = perspective(glm::radians(45.0f), ratio, 0.1f, 100.0f);
+
+    float angle = 0.0;
+
+    // отключаем отображение задней части полигонов
+    glEnable(GL_CULL_FACE);
+    // отбрасываться будут задние грани
+    glCullFace(GL_BACK);
+    // Определяем, в каком направлении должный обходиться вершины, для передней части (против часовой стрелки?)
+    // задняя часть будет отбрасываться
+    glFrontFace(GL_CCW);
 
     while (!glfwWindowShouldClose(window)){
 
@@ -198,7 +206,14 @@ int main(void) {
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glUseProgram (shaderProgram);
-        
+
+        // Вращаем
+        angle += 0.05;
+        mat4 modelMatrix = mat4(1.0);
+        // Здесь тоже обратный порядок умножения матриц
+        modelMatrix = translate(modelMatrix, vec3(0.0f, 0.0f, -10.0f));
+        modelMatrix = rotate(modelMatrix, float(angle/M_PI), vec3(0.0f, 1.0f, 0.0f));
+
         // выставляем матрицу трансформации
         mat4 modelViewProjMatrix = projectionMatrix * viewMatrix * modelMatrix;
         glUniformMatrix4fv(modelViewProjMatrixLocation, 1, false, glm::value_ptr(modelViewProjMatrix));
