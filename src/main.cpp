@@ -9,11 +9,33 @@
 #include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
 #include <GLFW/glfw3.h>     // Непосредственно сам GLFW
 #include <glm.hpp>          // библиотека графической математики
-
+#include <gtc/type_ptr.hpp>
+#include <gtc/matrix_transform.hpp>
 
 // Документация
 // https://www.opengl.org/sdk/docs/man/html/
 
+using namespace glm;
+
+// вычисление смещения в структуре/классе
+#define OFFSETOF(TYPE, FIELD) ((void*)&(((TYPE*)NULL)->FIELD))
+// Превращаем текущий текст в строку шейдера
+#define STRINGIFY_SHADER(TEXT) ("#version 120\n "#TEXT)
+
+struct Vertex{
+    vec3 pos;
+    vec3 normal;
+    vec3 color;
+    vec2 texCoord;
+
+    // constructor
+    Vertex(vec3 inPos, vec3 inNormal, vec3 inColor, vec2 inTexCoord):
+        pos(inPos),
+        normal(inNormal),
+        color(inColor),
+        texCoord(inTexCoord){
+    }
+};
 
 static void error_callback(int error, const char* description) {
     printf("OpenGL error = %d\n description = %s\n\n", error, description);
@@ -46,9 +68,9 @@ int main(void) {
     // создание окна
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-//    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-//    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
     if (!window) {
         glfwTerminate();
@@ -69,117 +91,119 @@ int main(void) {
     glfwSetKeyCallback(window, key_callback);
 
     // оотношение сторон
-    float ratio = 1.0;
     int width = 0;
     int height = 0;
-
-    // получаем соотношение сторон
+    // Размер буффера кадра
     glfwGetFramebufferSize(window, &width, &height);
-    ratio = width / (float) height;
-
     // задаем отображение
     glViewport(0, 0, width, height);
 
-    
-    const char* vertex_shader =
-    "#version 120\n"
-    "attribute vec3 aPos;"
-    "attribute vec3 aColor;"
-    "varying vec3 vColor;"
-    "void main () {"
-    "   gl_Position = vec4(aPos, 1.0);"
-    "   vColor = aColor;"
-    "}";
-    
-    const char* fragment_shader =
-    "#version 120\n"
-    "varying vec3 vColor;"
-    "void main () {"
-    "  gl_FragColor = vec4(vColor, 1.0);"
-    "}";
+
+    // Шейдеры
+    const char* vertexShader = STRINGIFY_SHADER(
+        attribute vec3 aPos;
+        attribute vec3 aNormal;
+        attribute vec3 aColor;
+        attribute vec3 aTexCoord;
+
+        uniform mat4 uModelViewProjMat;
+
+        varying vec3 vColor;
+        varying vec3 vTexCoord;
+
+        void main () {
+            gl_Position = vec4(aPos, 1.0);
+            vColor = aColor;
+            vTexCoord = aTexCoord;
+        }
+    );
+    const char* fragmentShader = STRINGIFY_SHADER(
+        varying vec3 vColor;
+        varying vec3 vTexCoord;
+
+        void main () {
+            gl_FragColor = vec4(vColor, 1.0);
+        }
+    );
     
     GLuint vs = glCreateShader (GL_VERTEX_SHADER);
-    glShaderSource (vs, 1, &vertex_shader, NULL);
+    glShaderSource (vs, 1, &vertexShader, NULL);
     glCompileShader (vs);
     GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
-    glShaderSource (fs, 1, &fragment_shader, NULL);
+    glShaderSource (fs, 1, &fragmentShader, NULL);
     glCompileShader (fs);
     checkOpenGLerror();
     
-    GLuint shader_program = glCreateProgram ();
-    glAttachShader (shader_program, fs);
-    glAttachShader (shader_program, vs);
-    glLinkProgram (shader_program);
+    GLuint shaderProgram = glCreateProgram ();
+    glAttachShader (shaderProgram, fs);
+    glAttachShader (shaderProgram, vs);
+    glLinkProgram (shaderProgram);
     checkOpenGLerror();
     
-    // аттрибуты шейдера
-    int posAttrib = glGetAttribLocation(shader_program, "aPos");
-    int colorAttrib = glGetAttribLocation(shader_program, "aColor");
+    // аттрибуты вершин шейдера
+    int posAttribLocation = glGetAttribLocation(shaderProgram, "aPos");
+    int normalAttribLocation = glGetAttribLocation(shaderProgram, "aNormal");
+    int colorAttribLocation = glGetAttribLocation(shaderProgram, "aColor");
+    int aTexCoordAttribLocation = glGetAttribLocation(shaderProgram, "aTexCoord");
+
+    // юниформы шейдера
+    int modelViewProjMatrixLocation = glGetUniformLocation(shaderProgram, "uModelViewProjMat");
 
     // данные о вершинах
-    float points[] = {
-       0.0f,  0.5f,  0.0f,          0.0f,  0.5f,  0.0f,
-       -0.5f, 0.5f,  0.0f,          0.5f, 0.5f,  0.0f,
-       -0.5f, -0.5f,  0.0f,         0.5f, 0.5f,  1.0f
+    Vertex points[] = {
+        Vertex(vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-0.5f, 0.5f,  0.0f), vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-0.5f, -0.5f,  0.0f), vec3(0.0f, 0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f))
     };
     GLuint VBO = 0;
     glGenBuffers (1, &VBO);
     glBindBuffer (GL_ARRAY_BUFFER, VBO);
-    glBufferData (GL_ARRAY_BUFFER, 18 * sizeof(float), points, GL_STATIC_DRAW);
+    glBufferData (GL_ARRAY_BUFFER, 3 * sizeof(Vertex), points, GL_STATIC_DRAW);
     checkOpenGLerror();
-
-    // данные о цветах
-//    float colors[] = {
-//        0.0f,  0.5f,  0.0f,
-//        0.5f, 0.5f,  0.0f,
-//        0.5f, 0.5f,  1.0f
-//    };
-//    GLuint colorVBO = 0;
-//    glGenBuffers (1, &colorVBO);
-//    glBindBuffer (GL_ARRAY_BUFFER, colorVBO);
-//    glBufferData (GL_ARRAY_BUFFER, 18 * sizeof(float), points, GL_STATIC_DRAW);
-//    checkOpenGLerror();
 
     // VAO
     GLuint vao = 0;
     glGenVertexArrays (1, &vao);
     glBindVertexArray (vao);
-    // 6*sizeof(float) - размер блока информации о вершине
-    // (void*)(sizeof(float)*3) - смещение от начала
+    // sizeof(Vertex) - размер блока одной информации о вершине
+    // OFFSETOF(Vertex, color) - смещение от начала
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glEnableVertexAttribArray(posAttrib);
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(sizeof(float)*0));
+    // Позиции
+    glEnableVertexAttribArray(posAttribLocation);
+    glVertexAttribPointer(posAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, pos));
+    // Нормали
+    glEnableVertexAttribArray(normalAttribLocation);
+    glVertexAttribPointer(normalAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, normal));
     // Цвет вершин
-    glEnableVertexAttribArray(colorAttrib);
-    glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(sizeof(float)*3));
+    glEnableVertexAttribArray(colorAttribLocation);
+    glVertexAttribPointer(colorAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, color));
+    // Текстурные координаты
+    glEnableVertexAttribArray(aTexCoordAttribLocation);
+    glVertexAttribPointer(aTexCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, texCoord));
     // off
     glBindVertexArray(0);
     checkOpenGLerror();
+
+    // Текущие матрицы
+    mat4 modelMatrix = mat4(1.0f);
+    // вид
+    mat4 viewMatrix = glm::translate(mat4(0.0), vec3(0.0f, 0.0f, -10.0f));
+    // Матрица проекции
+    float ratio = float(width) / float(height);
+    mat4 projectionMatrix = perspective(glm::radians(30.0f), ratio, 0.1f, 100.0f);
 
     while (!glfwWindowShouldClose(window)){
 
         // wipe the drawing surface clear
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram (shader_program);
+        glUseProgram (shaderProgram);
         
-//        // ! Включаем массив атрибутов
-//        const char* attr_name = "vp";
-//        int attrib = glGetAttribLocation(shader_program, attr_name);
-//        glEnableVertexAttribArray(attrib);
-//        // ! Подключаем VBO
-//        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-//        // ! Указывая pointer 0 при подключенном буфере, мы указываем, что данные представлены в VBO
-//        glVertexAttribPointer(attrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-//        // ! Передаем данные на видеокарту (рисуем)
-//        glDrawArrays(GL_TRIANGLES, 0, 3);
-//        // ! Отключаем VBO
-//        glBindBuffer(GL_ARRAY_BUFFER, 0);
-//        
-//        // ! Отключаем массив атрибутов
-//        glDisableVertexAttribArray(attrib);
+        // выставляем матрицу трансформации
+        mat4 modelViewProjMatrix = projectionMatrix * viewMatrix * modelMatrix;
+        glUniformMatrix4fv(modelViewProjMatrixLocation, 1, false, glm::value_ptr(modelViewProjMatrix));
 
-        
+        // рисуем
         glBindVertexArray(vao);
         // draw points 0-3 from the currently bound VAO with current in-use shader
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -189,7 +213,7 @@ int main(void) {
         glfwPollEvents();
     }
 
-//    glDeleteProgram(shader_program);
+//    glDeleteProgram(shaderProgram);
 //    glDeleteBuffers(1, &vbo);
 //    glDeleteVertexArrays(1, &vao);
 
