@@ -81,28 +81,7 @@ static void checkOpenGLerror() {
     }
 }
 
-//ImageData loadImage(const string& path){
-//    png_image image;
-//    memset(&image, 0, sizeof image);
-//    image.version = PNG_IMAGE_VERSION;
-
-//    if (png_image_begin_read_from_file(&image, path)) {
-//        image.format = PNG_FORMAT_RGBA;
-//        size_z imageSize = PNG_IMAGE_SIZE(image);
-//        png_bytep buffer = malloc(imageSize);
-
-//        if ((imageSize > 0) && (buffer != NULL)){
-//            if (png_image_finish_read(&image, NULL, buffer, 0, NULL)){
-//                int width = 0;
-//                int height = 0;
-//                return ImageData(imageSize, buffer, width, height);
-//            }
-//        }
-//    }
-//    return ImageData(0, NULL, 0, 0);
-//}
-
-ImageData loadPngImage(char* fileName){
+ImageData loadPngImage(const char* fileName){
     // проверяем сигнатуру файла (первые 4 байт)
     size_t headerSize = 8;
     png_byte header[headerSize];
@@ -257,7 +236,7 @@ int main(void) {
         attribute vec3 aPos;
         attribute vec3 aNormal;
         attribute vec3 aColor;
-        attribute vec3 aTexCoord;
+        attribute vec2 aTexCoord;
         // uniforms
         uniform mat4 uModelViewMat;
         uniform mat4 uNormalMat;
@@ -266,7 +245,7 @@ int main(void) {
         varying vec3 vPosViewSpace;
         varying vec3 vNormalViewSpace;
         varying vec3 vColor;
-        varying vec3 vTexCoord;
+        varying vec2 vTexCoord;
 
         void main () {
             vec4 vertexVec4 = vec4(aPos, 1.0);      // последняя компонента 1, тк это точка
@@ -285,24 +264,24 @@ int main(void) {
         varying vec3 vPosViewSpace;
         varying vec3 vNormalViewSpace;
         varying vec3 vColor;
-        varying vec3 vTexCoord;
+        varying vec2 vTexCoord;
 
+        uniform sampler2D uTexture1;
         uniform vec3 uLightPosViewSpace;
 
-        const float ambientCoef = 0.1;
+        const float ambientCoef = 0.5;
         const float diffuseCoef = 0.5;
-        const float specularCoeff = 0.1;
-        const float specularShinnes = 1.0;  // >0
+        const float specularCoeff = 1.0;
+        const float specularShinnes = 3.0;  // >0
 
         void main () {
+            // Рассчет освещения
             vec3 fromTexelToLightDir = normalize(uLightPosViewSpace - vPosViewSpace);
             vec3 fromTexelToEyesDir = normalize(-vPosViewSpace);
             vec3 texelLightReflectionDir = normalize(reflect(-fromTexelToLightDir, vNormalViewSpace));
-
             // Диффузное
             // на сколкьо сильно совпадает направление нормали и направления к свету
             float diffusePower = diffuseCoef * max(dot(vNormalViewSpace, fromTexelToLightDir), 0.0);
-
             // Блики
             // Степень того, как сильно совпадает направление отражения света и направление в камеру
             float specularDot = max(dot(texelLightReflectionDir, fromTexelToEyesDir), 0.0);
@@ -312,10 +291,12 @@ int main(void) {
                specularPower = pow(specularDot, specularShinnes);
                specularPower = clamp(specularPower, 0.0, 1.0);
             }
-
             float lightPower = ambientCoef + diffusePower + specularPower;
 
-            gl_FragColor = vec4(lightPower, lightPower, lightPower, 1.0);
+            // текстура
+            vec3 textureColor = vec3(texture2D(uTexture1, vTexCoord));
+
+            gl_FragColor = vec4(textureColor * vColor * lightPower, 1.0);
         }
     );
     
@@ -344,35 +325,36 @@ int main(void) {
     int modelViewMatrixLocation = glGetUniformLocation(shaderProgram, "uModelViewMat");
     int normalMatrixLocation = glGetUniformLocation(shaderProgram, "uNormalMat");
     int lightPosViewSpaceLocation = glGetUniformLocation(shaderProgram, "uLightPosViewSpace");
+    int texture1Location = glGetUniformLocation(shaderProgram, "uTexture1");
 
     // данные о вершинах
     int vertexCount = 18;
     Vertex points[] = {
         //              ВЕРШИНА                     НОРМАЛЬ                 ЦВЕТ                ТЕКСТУРНЫЕ_КООРДИНАТЫ
         // первая грань, передняя
-        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(0.5f, 1.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
         // вторая, правая
-        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.5f, 1.0f)),
+        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
         // третья, задняя
-        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(0.5f, 1.0f)),
+        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
         // четвертая, левая
-        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.5f, 1.0f)),
+        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
         // пятая, низ пирамиды 1
-        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f)),
         // шестая, низ пирамиды 2
-        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.5f, 0.0f, 0.5f), vec2(0.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.0f, 0.5f, 0.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(0.0f, 0.5f, 0.5f), vec2(0.0f, 0.0f))
+        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
+        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f)),
+        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f))
     };
     GLuint VBO = 0;
     glGenBuffers (1, &VBO);
@@ -429,8 +411,17 @@ int main(void) {
     double time = glfwGetTime();
 
 
-    ImageData info = loadPngImage("/home/devnul/Projects/OpenGL_Practice1/build/LinuxQtCreator/test.png");
-
+    ImageData info = loadPngImage("/home/devnul/Projects/OpenGL_Practice1/test.png");
+    uint textureId = 0;
+    if(info.loaded){
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,              // формат внутри OpenGL
+                     info.width, info.height, 0,            // ширинна, высота, границы
+                     GL_RGBA, GL_UNSIGNED_BYTE, info.data); // формат входных данных
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
 
     while (!glfwWindowShouldClose(window)){
         // приращение времени
@@ -471,6 +462,12 @@ int main(void) {
         glUniformMatrix4fv(modelViewProjMatrixLocation, 1, false, glm::value_ptr(modelViewProjMatrix));
         // выставляем позицию света в координатах камеры
         glUniform3f(lightPosViewSpaceLocation, lightPosViewSpace.x, lightPosViewSpace.y, lightPosViewSpace.z);
+        // говорим шейдеру, что текстура будет на 0 позиции (GL_TEXTURE0)
+        glUniform1i(texture1Location, 0);
+
+        // активируем нулевую текстуру для для шейдера, включаем эту текстуру
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureId);
 
         // рисуем
         glBindVertexArray(vao);
