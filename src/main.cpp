@@ -1,8 +1,8 @@
 // TODO: надо ли?
+// #define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
 #define GLFW_INCLUDE_GLU
 #define GLFW_INCLUDE_GL3
 #define GLFW_INCLUDE_GLEXT
-// #define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
 #include <string>
 #include <stdio.h>
 #include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
@@ -10,7 +10,10 @@
 #include <glm.hpp>          // библиотека графической математики
 #include <gtc/type_ptr.hpp>
 #include <gtc/matrix_transform.hpp>
-#include <png.h>
+#include "PngLoader.h"
+#include "Helpers.h"
+#include "Vertex.h"
+#include "Figures.h"
 
 // Документация
 // https://www.opengl.org/sdk/docs/man/html/
@@ -18,52 +21,6 @@
 using namespace std;
 using namespace glm;
 
-
-// вычисление смещения в структуре/классе
-#define OFFSETOF(TYPE, FIELD) ((void*)&(((TYPE*)NULL)->FIELD))
-// Превращаем текущий текст в строку шейдера
-#define STRINGIFY_SHADER(TEXT) ("#version 120\n "#TEXT)
-
-struct Vertex{
-    vec3 pos;
-    vec3 normal;
-    vec3 color;
-    vec2 texCoord;
-
-    // constructor
-    Vertex(vec3 inPos, vec3 inNormal, vec3 inColor, vec2 inTexCoord):
-        pos(inPos),
-        normal(inNormal),
-        color(inColor),
-        texCoord(inTexCoord){
-    }
-};
-
-struct ImageData{
-    bool loaded;
-    size_t dataSize;
-    char* data;
-    int width;
-    int height;
-    // constructor
-    ImageData(size_t inDataSize, char* inData, int inWidth, int inHeight){
-        width = inWidth;
-        height = inHeight;
-        if(inDataSize > 0){
-            data = inData;
-            loaded = true;
-        }else{
-            data = NULL;
-            loaded = false;
-        }
-    }
-    // destructor
-    ~ImageData(){
-        if(data != NULL){
-            delete data;
-        }
-    }
-};
 
 static void error_callback(int error, const char* description) {
     printf("OpenGL error = %d\n description = %s\n\n", error, description);
@@ -80,107 +37,6 @@ static void checkOpenGLerror() {
         printf("OpenGl error! %d - %s\n", errCode, glewGetErrorString(errCode));
     }
 }
-
-ImageData loadPngImage(const char* fileName){
-    // проверяем сигнатуру файла (первые 4 байт)
-    size_t headerSize = 8;
-    png_byte header[headerSize];
-    memset(header, 0, headerSize);
-    FILE* fp = fopen(fileName, "rb");
-    if(fp == NULL){
-        printf("File %s nor found\n", fileName);
-        return ImageData(0, NULL, 0, 0);
-    }
-
-    fread(header, 1, headerSize, fp);
-    if (png_check_sig(header, headerSize) == false) {
-        fclose(fp);
-        printf("Is not png: %s\n", fileName);
-        return ImageData(0, NULL, 0, 0);
-    }
-    
-    // создаем внутреннюю структуру png для работы с файлом
-    // последние параметры - структура, для функции обработки ошибок и варнинга (последн. 2 параметра)
-    png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
-    // создаем структуру с информацией о файле
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-    
-    //> Save calling environment for long jump
-    setjmp(png_jmpbuf(png_ptr));
-
-    //> Initialize input/output for the PNG file
-    png_init_io(png_ptr, fp);
-
-    // говорим библиотеке, что мы уже прочли 4 байт, когда проверяли сигнатуру
-    png_set_sig_bytes(png_ptr, headerSize);
-    // читаем всю информацию о файле
-    png_read_info(png_ptr, info_ptr);
-    // Эта функция возвращает инфу из info_ptr
-    // размер картинки в пикселях
-    png_uint_32 width = 0;
-    png_uint_32 height = 0;
-    // глубина цвета (одного из каналов, может быть 1, 2, 4, 8, 16)
-    int bit_depth = 0;
-    // описывает какие каналы присутствуют:
-    // PNG_COLOR_TYPE_GRAY, PNG_COLOR_TYPE_GRAY_ALPHA, PNG_COLOR_TYPE_PALETTE,
-    // PNG_COLOR_TYPE_RGB, PNG_COLOR_TYPE_RGB_ALPHA...
-    int color_type = 0;
-    // последние 3 параметра могут быть нулями и обозначают: тип фильтра, тип компрессии и тип смещения
-    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, 0, 0, 0);
-
-    // png формат может содержать 16 бит на канал, но нам нужно только 8, поэтому сужаем канал
-    if (bit_depth == 16) png_set_strip_16(png_ptr);
-    // преобразуем файл если он содержит палитру в нормальный RGB
-    if (color_type == PNG_COLOR_TYPE_PALETTE && bit_depth <= 8) png_set_palette_to_rgb(png_ptr);
-    // если в грэйскейле меньше бит на канал чем 8, то конвертим к нормальному 8-битному
-    if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) png_set_expand_gray_1_2_4_to_8(png_ptr);
-    // и добавляем полный альфа-канал
-    if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
-    // В нашей игре допустимы картинки, содержащие информацию только об оттенках серого цвета (grayscale картинки).
-    // Если же, необходимо преобразование к RGB формату,
-    if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA) png_set_gray_to_rgb(png_ptr);
-
-    double gamma = 0.0f;
-    // если есть информация о гамме в файле, то устанавливаем на 2.2
-    if ( png_get_gAMA(png_ptr, info_ptr, &gamma) ) png_set_gamma(png_ptr, 2.2, gamma);
-    // иначе ставим дефолтную гамму для файла в 0.45455 (good guess for GIF images on PCs)
-    else png_set_gamma(png_ptr, 2.2, 0.45455);
-
-    // после всех трансформаций, апдейтим информацию в библиотеке
-    png_read_update_info(png_ptr, info_ptr);
-    // опять получаем все размеры и параметры обновленной картинки
-    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, 0, 0, 0);
-
-    // определяем кол-во байт нужных для того чтобы вместить строку
-    png_uint_32 row_bytes = png_get_rowbytes(png_ptr, info_ptr);
-    // теперь, мы можем выделить память чтобы вместить картинку
-    size_t dataSize = row_bytes * height;
-    png_byte* data = new png_byte[dataSize];
-    memset(data, 0, dataSize);
-    // выделяем память, для указателей на каждую строку
-    png_byte **row_pointers = new png_byte * [height];
-    // сопоставляем массив указателей на строчки, с выделенными в памяти (res)
-    // т.к. изображение перевернутое, то указатели идут снизу вверх
-    for (unsigned int i = 0; i < height; i++){
-        row_pointers[height - i - 1] = data + i * row_bytes;
-    }
-
-    // все, читаем картинку (данные)
-    png_read_image(png_ptr, row_pointers);
-
-    // освобождаем память от указателей на строки
-    delete [] row_pointers;
-
-    // освобождаем память выделенную для библиотеки libpng
-    png_destroy_read_struct(&png_ptr, 0, 0);
-
-    // закрываем файл
-    fclose(fp);
-
-    // TODO: формат
-    return ImageData(dataSize, (char*)data, width, height);
-}
-
 
 int main(void) {
 
@@ -328,38 +184,10 @@ int main(void) {
     int texture1Location = glGetUniformLocation(shaderProgram, "uTexture1");
 
     // данные о вершинах
-    int vertexCount = 18;
-    Vertex points[] = {
-        //              ВЕРШИНА                     НОРМАЛЬ                 ЦВЕТ                ТЕКСТУРНЫЕ_КООРДИНАТЫ
-        // первая грань, передняя
-        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(0.5f, 1.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.0f,  0.5f,  0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-        // вторая, правая
-        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.5f, 1.0f)),
-        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.5f,  0.5f,  0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-        // третья, задняя
-        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(0.5f, 1.0f)),
-        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3( 0.0f,  0.5f, -0.5f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-        // четвертая, левая
-        Vertex(vec3( 0.0f,  1.0f,  0.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.5f, 1.0f)),
-        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3(-0.5f,  0.5f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-        // пятая, низ пирамиды 1
-        Vertex(vec3(-1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f)),
-        // шестая, низ пирамиды 2
-        Vertex(vec3( 1.0f, -1.0f, -1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
-        Vertex(vec3( 1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f)),
-        Vertex(vec3(-1.0f, -1.0f,  1.0f), vec3( 0.0f, -1.0f, 0.0f), vec3(1.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f))
-    };
     GLuint VBO = 0;
     glGenBuffers (1, &VBO);
     glBindBuffer (GL_ARRAY_BUFFER, VBO);
-    glBufferData (GL_ARRAY_BUFFER, vertexCount * sizeof(Vertex), points, GL_STATIC_DRAW);
+    glBufferData (GL_ARRAY_BUFFER, piramideVertexCount * sizeof(Vertex), piramideVertexes, GL_STATIC_DRAW);
     checkOpenGLerror();
 
     // VAO
@@ -423,6 +251,9 @@ int main(void) {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
+    // TODO: !!!
+//    glDebugMessageCallback
+
     while (!glfwWindowShouldClose(window)){
         // приращение времени
         double newTime = glfwGetTime();
@@ -471,7 +302,7 @@ int main(void) {
 
         // рисуем
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
+        glDrawArrays(GL_TRIANGLES, 0, piramideVertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
