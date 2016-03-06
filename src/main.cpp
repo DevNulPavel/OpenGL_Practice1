@@ -202,15 +202,23 @@ int main(void) {
     GLuint VBO = 0;
     glGenBuffers (1, &VBO);
     glBindBuffer (GL_ARRAY_BUFFER, VBO);
-    glBufferData (GL_ARRAY_BUFFER, piramideVertexCount * sizeof(Vertex), piramideVertexes, GL_STATIC_DRAW);
+    glBufferData (GL_ARRAY_BUFFER, indexedPiramideVertexCount * sizeof(Vertex), indexedPiramideVertexes, GL_STATIC_DRAW);
     CHECK_GL_ERRORS();
 
+    // данные о индексах
+    GLuint indexesVBO = 0;
+    glGenBuffers (1, &indexesVBO);
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, indexesVBO);
+    glBufferData (GL_ELEMENT_ARRAY_BUFFER, piramideIndexesCount * sizeof(uint), piramideIndexes, GL_STATIC_DRAW);
+    CHECK_GL_ERRORS();
+
+    // sizeof(Vertex) - размер блока одной информации о вершине
+    // OFFSETOF(Vertex, color) - смещение от начала
     // VAO
     GLuint vao = 0;
     glGenVertexArrays (1, &vao);
     glBindVertexArray (vao);
-    // sizeof(Vertex) - размер блока одной информации о вершине
-    // OFFSETOF(Vertex, color) - смещение от начала
+    // VBO вершин
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     // Позиции
     glEnableVertexAttribArray(posAttribLocation);
@@ -224,6 +232,8 @@ int main(void) {
     // Текстурные координаты
     glEnableVertexAttribArray(aTexCoordAttribLocation);
     glVertexAttribPointer(aTexCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, texCoord));
+    // включаем индексы
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexesVBO);
     // off
     glBindVertexArray(0);
     CHECK_GL_ERRORS();
@@ -324,7 +334,7 @@ int main(void) {
 
         // рисуем
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, piramideVertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
+        glDrawElements(GL_TRIANGLES, piramideIndexesCount, GL_UNSIGNED_INT, (void*)(0)); // draw points 0-3 from the currently bound VAO with current in-use shader
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
