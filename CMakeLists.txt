@@ -69,8 +69,8 @@ if (UNIX)
 		set(CMAKE_C_COMPILER "clang")
 		set(CMAKE_CXX_COMPILER "clang++")
 		# Скрываем ворнинги на clang + цвета
-		set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Qunused-arguments -fcolor-diagnostics")
-		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -fcolor-diagnostics")
+		set(CUSTOM_COMPILER_C_FLAGS "-Wno-error=unused-command-line-argument -Qunused-arguments -fcolor-diagnostics")
+		set(CUSTOM_COMPILER_CXX_FLAGS "-Wno-error=unused-command-line-argument -Qunused-arguments -fcolor-diagnostics")
 	endif(CLANG_FOUND)
 	message("**********************************")
 endif()
@@ -94,6 +94,9 @@ endforeach(INCLUDE_DIR)
 foreach(LIBRARY_DIR ${LIBS_FOLDERS})
 	message("******** Subproject start ***********")
 	message("Project with path = ${LIBS_FOLDER}${LIBRARY_DIR}")
+	# Кастомные флаги сборки библиотек
+	set (CMAKE_C_FLAGS "${CUSTOM_COMPILER_C_FLAGS}")
+  	set (CMAKE_CXX_FLAGS "${CUSTOM_COMPILER_CXX_FLAGS}")
 	add_subdirectory(${LIBS_FOLDER}${LIBRARY_DIR} ${CMAKE_BINARY_DIR}/libs/${LIBRARY_DIR})
 	# message("LIBS = ${${LIBRARY_DIR}_LIBRARIES}")
 	# message("includes = ${GLFW_INCLUDE_DIRS}")
@@ -139,17 +142,13 @@ if(APPLE)
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g")
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -g -stdlib=libc++")
 else (UNIX)
-	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g -std=c++11 -Wno-error=unused-command-line-argument")
-  	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -g -std=c++11 -Wno-error=unused-command-line-argument")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CUSTOM_COMPILER_C_FLAGS} -O0 -Wall -g -std=c++11")
+  	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CUSTOM_COMPILER_CXX_FLAGS} -O0 -Wall -g -std=c++11")
 else (MSYS)
 	# микрософту не нужен флаг -std=c++11
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O0 /g /Wall")
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O0 /g /Wall")
 endif ()
-
-# Флаги компиляции С и C++ из настроек проекта
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${PROJECT_C_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PROJECT_CXX_FLAGS}")
 
 # Вывод информации о настройке копиляции (Функция в CMake/Helpers.cmake)
 print_current_cmake_config()
@@ -183,6 +182,14 @@ message("${ALL_SOURCES}")
 message("******** Generating started ***********")
 # Из найденных исходников выставляем генерацию бинарника
 add_executable(${EXECUTABLE_NAME} ${ALL_HEADERS} ${ALL_SOURCES})
+
+# Создаем символьную ссылку на ресурсы (Для исполняемго файла, после выбора)
+add_custom_command (
+    TARGET ${EXECUTABLE_NAME}
+    POST_BUILD
+    COMMAND cd ${CMAKE_BINARY_DIR} 
+    COMMAND ln -s -f ../../res res
+)
 
 # Зависимости сборки
 add_dependencies (${EXECUTABLE_NAME} ${LIBS_DEPENCY_NAMES})

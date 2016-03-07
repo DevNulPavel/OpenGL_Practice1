@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <png.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string>
+
+using namespace std;
 
 
 // constructor
@@ -26,6 +31,14 @@ ImageData::~ImageData(){
 
 
 ImageData loadPngImage(const char* fileName){
+//    // текущая папка
+//    char* curPath = NULL;
+//    size_t size = 0;
+//    curPath = getcwd(curPath, size);
+//    // полный путь
+//    string fullPath = string(curPath) + "/" + inputFile;
+//    const char* fileName = fullPath.c_str();
+
     // проверяем сигнатуру файла (первые 4 байт)
     size_t headerSize = 8;
     png_byte header[headerSize];

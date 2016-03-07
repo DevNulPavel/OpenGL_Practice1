@@ -118,7 +118,7 @@ void glfwScrollCallback(GLFWwindow* window, double scrollByX, double scrollByY) 
     }
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
 
     // окно
     GLFWwindow* window = 0;
@@ -255,7 +255,7 @@ int main(void) {
     double time = glfwGetTime();
 
 
-    ImageData info = loadPngImage("/home/devnul/Projects/OpenGL_Practice1/test.png");
+    ImageData info = loadPngImage("res/test.png");
     uint textureId = 0;
     if(info.loaded){
         glGenTextures(1, &textureId);
