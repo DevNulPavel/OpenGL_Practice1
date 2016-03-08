@@ -210,7 +210,8 @@ set_target_properties( ${EXECUTABLE_NAME}
 add_custom_command (
     TARGET ${EXECUTABLE_NAME}
     POST_BUILD
-    COMMAND ln -s -f ../../res ${CMAKE_BINARY_DIR}/res
+    COMMAND rm -f ${CMAKE_BINARY_DIR}/res
+    COMMAND ln -s ../../res ${CMAKE_BINARY_DIR}/res
 )
 
 # Зависимости сборки
