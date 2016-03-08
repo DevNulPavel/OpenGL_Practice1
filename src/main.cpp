@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
     glEnableVertexAttribArray(aTexCoordAttribLocation);
     glVertexAttribPointer(aTexCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, texCoord));
     // off
-    glBindVertexArray(0);
+    glBindVertexArray(-1);
     CHECK_GL_ERRORS();
 
     // позиция света в мировых координатах

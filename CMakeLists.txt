@@ -1,4 +1,4 @@
-set(PROJECT_NAME "OpenGL_Practice1")
+set(PROJECT_NAME "OpenGL_Practice")
 set(EXECUTABLE_NAME "OpenGLBin")
 # Пути к исходникам
 set(SRC_FOLDERS
@@ -9,18 +9,18 @@ set(LIBS_FOLDER libs/)
 set(LIBS_FOLDERS
 	glm
     glew
-    zlib
+    # zlib
 	libpng
 	glfw
 )
 set(LIBS_LINK_NAMES
 	glfw
     glew
-    zlibstatic
+    # zlibstatic
     png16_static
 )
 set(LIBS_DEPENCY_NAMES
-	zlib
+	# zlib
 	libpng
 	glfw
     glew
@@ -28,7 +28,7 @@ set(LIBS_DEPENCY_NAMES
 )
 set(LIBS_INCLUDE_FOLDERS
 	glm/glm 			# TODO: может можно просто корень?
-	zlib
+	# zlib
 	libpng
     glew/include
 	glfw/include
@@ -44,6 +44,9 @@ cmake_policy(VERSION 2.8)
 if (NOT CMAKE_VERSION VERSION_LESS "3.1")
 	cmake_policy(SET CMP0054 NEW)
 endif()
+
+# цвета
+option(CMAKE_COLOR_MAKEFILE "Color makefile" ON)
 
 # Инклюдим файлик с разными хелперами для сборки
 include("CMake/Helpers.cmake")
@@ -113,7 +116,8 @@ if(APPLE)
 		"-framework Cocoa"
 		"-framework IOKit"
 		"-framework CoreVideo"
-		"-ObjC")
+		"-ObjC"
+        "z")
 else (UNIX)
 	set (SYSTEM_LIBS
 		rt Xrandr Xinerama Xi Xxf86vm Xcursor
@@ -176,6 +180,11 @@ message("******** Sources list ***********")
 message("${ALL_HEADERS}")
 message("${ALL_SOURCES}")
 
+# тип сборки
+if( NOT CMAKE_BUILD_TYPE )
+  set( CMAKE_BUILD_TYPE Debug CACHE STRING "Debug" FORCE )
+endif()
+
 ####################################################
 # Генерация
 ####################################################
@@ -183,12 +192,25 @@ message("******** Generating started ***********")
 # Из найденных исходников выставляем генерацию бинарника
 add_executable(${EXECUTABLE_NAME} ${ALL_HEADERS} ${ALL_SOURCES})
 
+# Конкретные пути к бинарнику
+set_target_properties( ${EXECUTABLE_NAME}
+    PROPERTIES
+    # ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib"
+    # LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/lib"
+    # RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/bin"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG   ${CMAKE_BINARY_DIR}
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}
+    RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_BINARY_DIR}
+    RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR}
+)
+# set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR} )
+# set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+
 # Создаем символьную ссылку на ресурсы (Для исполняемго файла, после выбора)
 add_custom_command (
     TARGET ${EXECUTABLE_NAME}
     POST_BUILD
-    COMMAND cd ${CMAKE_BINARY_DIR} 
-    COMMAND ln -s -f ../../res res
+    COMMAND ln -s -f ../../res ${CMAKE_BINARY_DIR}/res
 )
 
 # Зависимости сборки
