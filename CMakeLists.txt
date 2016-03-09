@@ -7,30 +7,30 @@ set(SRC_FOLDERS
 # Конфиги используемых библиотек
 set(LIBS_FOLDER libs/)
 set(LIBS_FOLDERS
-	glm
-    glew
+    # glew
     # zlib
-	libpng
+    # libpng
+	glm
 	glfw
 )
 set(LIBS_LINK_NAMES
-	glfw
-    glew
+    # glew
     # zlibstatic
-    png16_static
+    # png16_static
+	glfw
 )
 set(LIBS_DEPENCY_NAMES
 	# zlib
-	libpng
+	# libpng
+    # glew
 	glfw
-    glew
 	glm
 )
 set(LIBS_INCLUDE_FOLDERS
+    # zlib
+    # libpng
+    # glew/include
 	glm/glm 			# TODO: может можно просто корень?
-	# zlib
-	libpng
-    glew/include
 	glfw/include
     glfw/deps
 )
@@ -84,7 +84,43 @@ project(${PROJECT_NAME} C CXX)
 enable_testing()
 
 ####################################################
-# Библиотеки
+# Библиотеки в системе
+####################################################
+message("******** System libs search ***********")
+# Библиотека PNG
+find_package(PNG REQUIRED)
+if(NOT PNG_FOUND)   # если не нашли, то добавляем из исходников
+    message("PNG lib not found, build from sources")
+    add_subdirectory(${LIBS_FOLDER}/libpng)
+    set(LIBS_DEPENCY_NAMES ${LIBS_DEPENCY_NAMES} libpng)
+endif()
+include_directories(${PNG_INCLUDE_DIR})
+set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${PNG_LIBRARIES})
+
+# Библиотека GLEW
+find_package(GLEW REQUIRED)
+if(NOT GLEW_FOUND)   # если не нашли, то добавляем из исходников
+    message("GLEW lib not found, build from sources")
+    add_subdirectory(${LIBS_FOLDER}/glew)
+    set(LIBS_DEPENCY_NAMES ${LIBS_DEPENCY_NAMES} glew)
+endif()
+include_directories(${GLEW_INCLUDE_DIRS})
+set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${GLEW_LIBRARIES})
+
+# Библиотека GLFW
+# find_package(PkgConfig REQUIRED)
+# pkg_search_module(GLFW REQUIRED glfw3)
+# find_package(GLFW REQUIRED)
+# if(NOT GLFW_FOUND)   # если не нашли, то добавляем из исходников
+#     message("GLFW lib not found, build from sources")
+#     add_subdirectory(${LIBS_FOLDER}/glfw)
+#     set(LIBS_DEPENCY_NAMES ${LIBS_DEPENCY_NAMES} glfw)
+# endif()
+# include_directories(${GLFW_INCLUDE_DIRS})
+# set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${GLFW_LIBRARIES})
+
+####################################################
+# Библиотеки собираемые из исходников
 ####################################################
 # Прописываем инклюды в которых будем искать хедеры библиотек проекта
 message("******** Lib include dirs ***********")

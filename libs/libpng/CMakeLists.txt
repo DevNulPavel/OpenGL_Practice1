@@ -22,8 +22,11 @@ set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
 
 # needed packages
 find_package(ZLIB REQUIRED)
+# если не нашли, то добавляем из исходников
+if(NOT ZLIB_FOUND)
+    add_subdirectory(../zlib)
+endif()
 include_directories(${ZLIB_INCLUDE_DIR})
-# include_directories(../zlib)
 
 
 if(NOT WIN32)
