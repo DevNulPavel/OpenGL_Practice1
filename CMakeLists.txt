@@ -87,25 +87,31 @@ enable_testing()
 # Библиотеки в системе
 ####################################################
 message("******** System libs search ***********")
-# Библиотека PNG
-find_package(PNG REQUIRED)
+# Библиотека PNG REQUIRED
+find_package(PNG)
 if(NOT PNG_FOUND)   # если не нашли, то добавляем из исходников
     message("PNG lib not found, build from sources")
     add_subdirectory(${LIBS_FOLDER}/libpng)
     set(LIBS_DEPENCY_NAMES ${LIBS_DEPENCY_NAMES} libpng)
+    include_directories(${LIBS_FOLDER}/libpng)
+    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} png16_static)
+else()
+    include_directories(${PNG_INCLUDE_DIR})
+    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${PNG_LIBRARIES})
 endif()
-include_directories(${PNG_INCLUDE_DIR})
-set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${PNG_LIBRARIES})
 
-# Библиотека GLEW
-find_package(GLEW REQUIRED)
+# Библиотека GLEW REQUIRED
+find_package(GLEW)
 if(NOT GLEW_FOUND)   # если не нашли, то добавляем из исходников
     message("GLEW lib not found, build from sources")
     add_subdirectory(${LIBS_FOLDER}/glew)
     set(LIBS_DEPENCY_NAMES ${LIBS_DEPENCY_NAMES} glew)
+    include_directories(${LIBS_FOLDER}/glew/include)
+    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} glew)
+else()
+    include_directories(${GLEW_INCLUDE_DIRS})
+    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${GLEW_LIBRARIES})
 endif()
-include_directories(${GLEW_INCLUDE_DIRS})
-set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${GLEW_LIBRARIES})
 
 # Библиотека GLFW
 # find_package(PkgConfig REQUIRED)
@@ -146,7 +152,9 @@ endforeach()
 ####################################################
 # Системные библиотеки
 ####################################################
-if(APPLE)
+if(WIN32)
+    set (SYSTEM_LIBS opengl32)
+else(APPLE)
 	set (SYSTEM_LIBS
 		"-framework OpenGL"
 		"-framework Cocoa"

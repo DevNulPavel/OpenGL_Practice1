@@ -5,6 +5,7 @@
 #define GLFW_INCLUDE_GLEXT
 #include <string>
 #include <iostream>
+#include <math.h>
 #include <stdio.h>
 #include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
 #include <GLFW/glfw3.h>     // Непосредственно сам GLFW
@@ -34,6 +35,8 @@ bool leftButtonPressed = false;
 bool rightPressed = false;
 double lastCursorPosX = 0.0;
 double lastCursorPosY = 0.0;
+
+#define MATH_PI 3.14159265
 
 void glfwErrorCallback(int error, const char* description) {
     printf("OpenGL error = %d\n description = %s\n\n", error, description);
@@ -161,7 +164,7 @@ int main(int argc, char *argv[]) {
     if(glDebugMessageCallback){
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(glDebugOut, NULL);
+        // glDebugMessageCallback(glDebugOut, 0);
         // Более высокий уровень отладки
         // GLuint unusedIds = 0;
         // glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);
@@ -182,7 +185,7 @@ int main(int argc, char *argv[]) {
     // Шейдеры
     GLuint shaderProgram = createShader();
     CHECK_GL_ERRORS();
-    
+
     // аттрибуты вершин шейдера
     int posAttribLocation = glGetAttribLocation(shaderProgram, "aPos");
     int normalAttribLocation = glGetAttribLocation(shaderProgram, "aNormal");
@@ -290,9 +293,9 @@ int main(int argc, char *argv[]) {
         // скейл
         modelMatrix = scale(modelMatrix, vec3(size));
         // вращение относительно осей модели
-        modelMatrix = rotate(modelMatrix, float(xAngle/180.0*M_PI), vec3(1.0f, 0.0f, 0.0f));
-        modelMatrix = rotate(modelMatrix, float(yAngle/180.0*M_PI), vec3(0.0f, 1.0f, 0.0f));
-        modelMatrix = rotate(modelMatrix, float(zAngle/180.0*M_PI), vec3(0.0f, 0.0f, 1.0f));
+        modelMatrix = rotate(modelMatrix, float(xAngle/180.0*MATH_PI), vec3(1.0f, 0.0f, 0.0f));
+        modelMatrix = rotate(modelMatrix, float(yAngle/180.0*MATH_PI), vec3(0.0f, 1.0f, 0.0f));
+        modelMatrix = rotate(modelMatrix, float(zAngle/180.0*MATH_PI), vec3(0.0f, 0.0f, 1.0f));
 
         // матрица модели-камеры
         mat4 modelViewMatrix = viewMatrix * modelMatrix;

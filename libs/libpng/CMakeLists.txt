@@ -20,11 +20,14 @@ set(PNGLIB_RELEASE 21)
 set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
 set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_RELEASE})
 
-# needed packages
-find_package(ZLIB REQUIRED)
+# needed packages REQUIRED
+find_package(ZLIB)
 # если не нашли, то добавляем из исходников
 if(NOT ZLIB_FOUND)
-    add_subdirectory(../zlib)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../zlib libs)
+    set(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../zlib)
+    set(ZLIB_LIBRARY zlib)
+    set(ZLIB_DEPENCY zlib)
 endif()
 include_directories(${ZLIB_INCLUDE_DIR})
 
@@ -120,6 +123,7 @@ unset(PNG_LIB_TARGETS)
 
 if(PNG_SHARED)
   add_library(${PNG_LIB_NAME} SHARED ${libpng_sources})
+  add_dependencies(${PNG_LIB_NAME} ${ZLIB_DEPENCY})
   set(PNG_LIB_TARGETS ${PNG_LIB_NAME})
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
@@ -133,6 +137,7 @@ if(PNG_STATIC)
   # does not work without changing name
   set(PNG_LIB_NAME_STATIC ${PNG_LIB_NAME}_static)
   add_library(${PNG_LIB_NAME_STATIC} STATIC ${libpng_sources})
+  add_dependencies(${PNG_LIB_NAME_STATIC} ${ZLIB_DEPENCY})
   list(APPEND PNG_LIB_TARGETS ${PNG_LIB_NAME_STATIC})
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
@@ -144,6 +149,7 @@ endif()
 if(PNG_FRAMEWORK)
   set(PNG_LIB_NAME_FRAMEWORK ${PNG_LIB_NAME}_framework)
   add_library(${PNG_LIB_NAME_FRAMEWORK} SHARED ${libpng_sources})
+  add_dependencies(${PNG_LIB_NAME_FRAMEWORK} ${ZLIB_DEPENCY})
   list(APPEND PNG_LIB_TARGETS ${PNG_LIB_NAME_FRAMEWORK})
   set_target_properties(${PNG_LIB_NAME_FRAMEWORK} PROPERTIES
     FRAMEWORK TRUE
