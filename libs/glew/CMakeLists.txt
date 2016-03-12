@@ -2,7 +2,7 @@ if ( NOT DEFINED CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Release CACHE STRING "Build type" )
 endif ()
 
-project (glew)
+project (libglew)
 
 cmake_minimum_required (VERSION 2.4)
 
@@ -30,9 +30,9 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if (WIN32)
-  set (GLEW_LIB_NAME glew32)
+  set (GLEW_LIB_NAME libglew)
 else ()
-  set (GLEW_LIB_NAME GLEW)
+  set (GLEW_LIB_NAME libglew)
   set (DLL_PREFIX lib)
 endif ()
 
@@ -43,6 +43,6 @@ add_definitions (-DGLEW_NO_GLU)
 
 include_directories (${GLEW_DIR}/include)
 
-add_library (glew STATIC ${GLEW_DIR}/src/glew.c)
-set_target_properties (glew PROPERTIES COMPILE_DEFINITIONS "GLEW_BUILD" OUTPUT_NAME "${GLEW_LIB_NAME}" PREFIX "${DLL_PREFIX}")
-target_link_libraries (glew ${GLEW_LIBRARIES})
+add_library (libglew STATIC ${GLEW_DIR}/src/glew.c)
+set_target_properties (libglew PROPERTIES COMPILE_DEFINITIONS "GLEW_BUILD" OUTPUT_NAME "${GLEW_LIB_NAME}" PREFIX "${DLL_PREFIX}")
+target_link_libraries (libglew ${GLEW_LIBRARIES})
