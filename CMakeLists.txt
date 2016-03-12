@@ -160,22 +160,16 @@ endforeach()
 # Системные библиотеки
 ####################################################
 if (APPLE)
-	set (SYSTEM_LIBS
-		"-framework OpenGL"
-		"-framework Cocoa"
-		"-framework IOKit"
-		"-framework CoreVideo"
-		"-ObjC"
-        "z")
-else (UNIX)
-	set (SYSTEM_LIBS
-		rt Xrandr Xinerama Xi Xxf86vm Xcursor
-        m c dl z GL GLU pthread X11)
-else (MSYS)
-	set (SYSTEM_LIBS )
-	# TODO:
-else (WIN32 AND NOT CYGWIN AND NOT MSYS)
+    set (SYSTEM_LIBS "-framework OpenGL" "-framework Cocoa" "-framework IOKit" "-framework CoreVideo" "-ObjC" "z")
+endif ()
+if (UNIX AND NOT WIN32 AND NOT APPLE)
+    set (SYSTEM_LIBS rt Xrandr Xinerama Xi Xxf86vm Xcursor m c dl z GL GLU pthread X11)
+endif()
+if (WIN32)
     set (SYSTEM_LIBS opengl32)
+endif ()
+if (MSYS)
+    set (SYSTEM_LIBS )
 endif ()
 message("******** System libs list ***********")
 message("${SYSTEM_LIBS}")
@@ -196,10 +190,12 @@ if(APPLE)
 	set (PROJECT_LINK_FLAGS "-stdlib=libc++")
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g")
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -g -stdlib=libc++")
-else (UNIX)
+endif ()
+if (UNIX)
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CUSTOM_COMPILER_C_FLAGS} -O0 -Wall -g -std=c++11")
   	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CUSTOM_COMPILER_CXX_FLAGS} -O0 -Wall -g -std=c++11")
-else (MSYS)
+endif ()
+if (MSYS)
 	# микрософту не нужен флаг -std=c++11
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O0 /g /Wall")
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O0 /g /Wall")
@@ -258,12 +254,23 @@ set_target_properties( ${EXECUTABLE_NAME}
 # set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
 
 # Создаем символьную ссылку на ресурсы (Для исполняемго файла, после выбора)
-add_custom_command (
-    TARGET ${EXECUTABLE_NAME}
-    POST_BUILD
-    COMMAND rm -f ${CMAKE_BINARY_DIR}/res
-    COMMAND ln -s ../../res ${CMAKE_BINARY_DIR}/res
-)
+if (WIN32)
+    string(REGEX REPLACE "/" "\\\\" SOURCE_RES_PATH "${CMAKE_BINARY_DIR}/../../res")
+    string(REGEX REPLACE "/" "\\\\" RESULT_RES_PATH "${CMAKE_BINARY_DIR}/res")
+    message("COPY RES COMMAND = xcopy ${SOURCE_RES_PATH} ${RESULT_RES_PATH}")
+    add_custom_command (
+        TARGET ${EXECUTABLE_NAME}
+        POST_BUILD
+        COMMAND copy ${SOURCE_RES_PATH} ${RESULT_RES_PATH} /y
+    )
+else()
+    add_custom_command (
+        TARGET ${EXECUTABLE_NAME}
+        POST_BUILD
+        COMMAND rm -f ${CMAKE_BINARY_DIR}/res
+        COMMAND ln -s ../../res ${CMAKE_BINARY_DIR}/res
+    )
+endif()
 
 # Зависимости сборки
 add_dependencies (${EXECUTABLE_NAME} ${LIBS_DEPENCY_NAMES})

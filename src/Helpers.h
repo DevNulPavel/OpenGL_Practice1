@@ -1,5 +1,7 @@
 #ifndef HELPERS
 #define HELPERS
+
+#define GLEW_STATIC
 #include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
 
 // вычисление смещения в структуре/классе
