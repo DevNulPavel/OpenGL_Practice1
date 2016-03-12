@@ -32,7 +32,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 if (WIN32)
   set (GLEW_LIB_NAME libglew)
 else ()
-  set (GLEW_LIB_NAME libglew)
+  set (GLEW_LIB_NAME glew)
   set (DLL_PREFIX lib)
 endif ()
 
