@@ -94,6 +94,7 @@ if(NOT PNG_FOUND)   # если не нашли, то добавляем из и�
     add_subdirectory(${LIBS_FOLDER}/libpng)
     set(LIBS_DEPENCY_NAMES ${LIBS_DEPENCY_NAMES} libpng)
     include_directories(${LIBS_FOLDER}/libpng)
+    set(LIBS_LINK_FOLDERS "${LIBS_LINK_FOLDERS} ${CMAKE_BINARY_DIR}/libs/libpng")
     set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} png16_static)
 else()
     include_directories(${PNG_INCLUDE_DIR})
@@ -107,9 +108,9 @@ if(NOT GLEW_FOUND)   # если не нашли, то добавляем из и
     add_subdirectory(${LIBS_FOLDER}/glew)
     set(LIBS_DEPENCY_NAMES ${LIBS_DEPENCY_NAMES} libglew)
     include_directories(${LIBS_FOLDER}/glew/include)
-    link_directories(${CMAKE_BINARY_DIR}/lib)
+   	set(LIBS_LINK_FOLDERS "${LIBS_LINK_FOLDERS} ${CMAKE_BINARY_DIR}/lib")
     message("CMAKE GLEW FOLDER = ${CMAKE_BINARY_DIR}/lib")
-    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${CMAKE_BINARY_DIR}/lib/libglew.a)
+    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} glew_static)
 else()
     include_directories(${GLEW_INCLUDE_DIRS})
     set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${GLEW_LIBRARIES})
@@ -154,9 +155,7 @@ endforeach()
 ####################################################
 # Системные библиотеки
 ####################################################
-if(WIN32)
-    set (SYSTEM_LIBS opengl32)
-else(APPLE)
+if (APPLE)
 	set (SYSTEM_LIBS
 		"-framework OpenGL"
 		"-framework Cocoa"
@@ -167,10 +166,12 @@ else(APPLE)
 else (UNIX)
 	set (SYSTEM_LIBS
 		rt Xrandr Xinerama Xi Xxf86vm Xcursor
-        m c dl z GL pthread X11)
+        m c dl z GL GLU pthread X11)
 else (MSYS)
 	set (SYSTEM_LIBS )
 	# TODO:
+else (WIN32)
+    set (SYSTEM_LIBS opengl32)
 endif ()
 message("******** System libs list ***********")
 message("${SYSTEM_LIBS}")
@@ -264,4 +265,5 @@ add_custom_command (
 add_dependencies (${EXECUTABLE_NAME} ${LIBS_DEPENCY_NAMES})
 
 # Библиотеки, с которыми будем ликовать
+# link_directories(${LIBS_LINK_FOLDERS})
 target_link_libraries (${EXECUTABLE_NAME} ${LIBS_LINK_NAMES} ${SYSTEM_LIBS})

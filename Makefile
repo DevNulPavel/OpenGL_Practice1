@@ -36,6 +36,7 @@ OSX:
 clean:
 	rm -rf build && \
 	mkdir build && \
+	mkdir -p build/Windows && \
 	mkdir -p build/Linux && \
 	mkdir -p build/LinuxQtCreator && \
 	mkdir -p build/LinuxKDevelop && \
