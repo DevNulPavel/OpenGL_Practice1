@@ -3,7 +3,6 @@
 #define GLFW_INCLUDE_GLU
 #define GLFW_INCLUDE_GL3
 #define GLFW_INCLUDE_GLEXT
-#define GLEW_STATIC
 #include <string>
 #include <iostream>
 #include <math.h>
