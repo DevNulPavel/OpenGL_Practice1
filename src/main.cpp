@@ -1,8 +1,3 @@
-// TODO: надо ли?
-// #define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
-#define GLFW_INCLUDE_GLU
-#define GLFW_INCLUDE_GL3
-#define GLFW_INCLUDE_GLEXT
 #include <string>
 #include <iostream>
 #include <math.h>
@@ -27,12 +22,6 @@ using namespace glm;
 #define MATH_PI 3.14159265
 
 // Текущие переменные для модели
-bool enableAutoRotate = true;
-vec3 modelPos = vec3(0.0f, 0.0f, -20.0f);
-float xAngle = 0.0;
-float yAngle = 0.0;
-float zAngle = 0.0;
-float size = 1.0;
 bool leftButtonPressed = false;
 bool rightPressed = false;
 double lastCursorPosX = 0.0;
