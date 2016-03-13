@@ -115,6 +115,7 @@ if(NOT GLEW_FOUND)   # если не нашли, то добавляем из и
    	set(LIBS_LINK_FOLDERS "${LIBS_LINK_FOLDERS} ${CMAKE_BINARY_DIR}/lib")
     message("CMAKE GLEW FOLDER = ${CMAKE_BINARY_DIR}/lib")
     set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} libglew)		# то, что указывается в add_library
+    add_definitions(-DGLEW_STATIC)
 else()
     include_directories(${GLEW_INCLUDE_DIRS})
     set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${GLEW_LIBRARIES})

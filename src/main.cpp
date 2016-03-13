@@ -1,9 +1,5 @@
 // TODO: надо ли?
 // #define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
-#define GLFW_INCLUDE_GLU
-#define GLFW_INCLUDE_GL3
-#define GLFW_INCLUDE_GLEXT
-#define GLEW_STATIC
 #include <string>
 #include <iostream>
 #include <math.h>
