@@ -12,7 +12,7 @@
 #define CHECK_GL_ERRORS() checkOpenGLerror(__FILE__, __LINE__)
 
 int checkOpenGLerror(const char *file, int line);
-void glDebugOut(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
+void glDebugOut(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam);
 
 
 #endif
