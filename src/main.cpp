@@ -118,7 +118,10 @@ int main(int argc, char *argv[]) {
     if(glDebugMessageCallback){
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
+        // Коллбек ошибок OpenGL
         glDebugMessageCallback((GLDEBUGPROC)glDebugOut, 0);
+
         // Более высокий уровень отладки
         // GLuint unusedIds = 0;
         // glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);

@@ -14,7 +14,7 @@ int checkOpenGLerror(const char* file, int line) {
     return retCode;
 }
 
-void glDebugOut(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam){
+void glDebugOut(uint source, uint type, uint id, uint severity, int length, const char* message, void* userParam){
     cout << "###### opengl-callback BEGIN ######" << endl;
     cout << "message: "<< message;
     cout << "type: ";

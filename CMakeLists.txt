@@ -256,7 +256,7 @@ set_target_properties( ${EXECUTABLE_NAME}
 
 # Создаем символьную ссылку на ресурсы (Для исполняемго файла, после выбора)
 if (WIN32)
-    string(REGEX REPLACE "/" "\\\\" SOURCE_RES_PATH "${CMAKE_BINARY_DIR}/../../res")
+    string(REGEX REPLACE "/" "\\\\" SOURCE_RES_PATH "${CMAKE_SOURCE_DIR}/res")
     string(REGEX REPLACE "/" "\\\\" RESULT_RES_PATH "${CMAKE_BINARY_DIR}/res/")
     message("COPY RES COMMAND = xcopy ${SOURCE_RES_PATH} ${RESULT_RES_PATH} /y")
     add_custom_command (
