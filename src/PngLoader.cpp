@@ -10,9 +10,10 @@ using namespace std;
 
 
 // constructor
-ImageData::ImageData(size_t inDataSize, char* inData, int inWidth, int inHeight){
+ImageData::ImageData(size_t inDataSize, char* inData, int inWidth, int inHeight, bool inWithAlpha){
     width = inWidth;
     height = inHeight;
+    withAlpha = inWithAlpha;
     if(inDataSize > 0){
         data = inData;
         loaded = true;
@@ -46,14 +47,14 @@ ImageData loadPngImage(const char* fileName){
     FILE* fp = fopen(fileName, "rb");
     if(fp == NULL){
         printf("File %s nor found\n", fileName);
-        return ImageData(0, NULL, 0, 0);
+        return ImageData(0, NULL, 0, 0, false);
     }
 
     fread(header, 1, headerSize, fp);
     if (png_check_sig(header, headerSize) == false) {
         fclose(fp);
         printf("Is not png: %s\n", fileName);
-        return ImageData(0, NULL, 0, 0);
+        return ImageData(0, NULL, 0, 0, false);
     }
 
     // создаем внутреннюю структуру png для работы с файлом
@@ -134,6 +135,8 @@ ImageData loadPngImage(const char* fileName){
     // закрываем файл
     fclose(fp);
 
+    bool withAlpha = color_type & PNG_COLOR_MASK_ALPHA;
+
     // TODO: формат
-    return ImageData(dataSize, (char*)data, width, height);
+    return ImageData(dataSize, (char*)data, width, height, withAlpha);
 }

@@ -1,3 +1,9 @@
+// TODO: надо ли?
+// #define GLFW_INCLUDE_GLCOREARB 1 // Tell GLFW to include the OpenGL core profile header
+#define GLFW_INCLUDE_GLU
+#define GLFW_INCLUDE_GL3
+#define GLFW_INCLUDE_GLEXT
+#include <vector>
 #include <string>
 #include <iostream>
 #include <math.h>
@@ -12,6 +18,7 @@
 #include "Vertex.h"
 #include "Figures.h"
 #include "Shaders.h"
+#include "ObjLoader.h"
 
 // Документация
 // https://www.opengl.org/sdk/docs/man/html/
@@ -152,7 +159,7 @@ int main(int argc, char *argv[]) {
     int modelViewProjMatrixLocation = glGetUniformLocation(shaderProgram, "uModelViewProjMat");
     CHECK_GL_ERRORS();
 
-    // данные о вершинах
+    // VBO, данные о вершинах
     GLuint VBO = 0;
     glGenBuffers (1, &VBO);
     glBindBuffer (GL_ARRAY_BUFFER, VBO);
@@ -192,6 +199,20 @@ int main(int argc, char *argv[]) {
 
     // текущее время
     double time = glfwGetTime();
+
+    // Загрузка текстуры
+    ImageData info = loadPngImage("res/test.png");
+    uint textureId = 0;
+    if(info.loaded){
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,              // формат внутри OpenGL
+                     info.width, info.height, 0,            // ширинна, высота, границы
+                     info.withAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, info.data); // формат входных данных
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        CHECK_GL_ERRORS();
+    }
 
     while (!glfwWindowShouldClose(window)){
         // приращение времени
