@@ -9,9 +9,10 @@ struct ImageData{
     char* data;
     int width;
     int height;
+    bool withAlpha;
 
     // constructor
-    ImageData(size_t inDataSize, char* inData, int inWidth, int inHeight);
+    ImageData(size_t inDataSize, char* inData, int inWidth, int inHeight, bool inWithAlpha);
     // destructor
     ~ImageData();
 };

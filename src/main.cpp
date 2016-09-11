@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_GLU
 #define GLFW_INCLUDE_GL3
 #define GLFW_INCLUDE_GLEXT
+#include <vector>
 #include <string>
 #include <iostream>
 #include <math.h>
@@ -17,6 +18,7 @@
 #include "Vertex.h"
 #include "Figures.h"
 #include "Shaders.h"
+#include "ObjLoader.h"
 
 // Документация
 // https://www.opengl.org/sdk/docs/man/html/
@@ -204,11 +206,21 @@ int main(int argc, char *argv[]) {
     int texture1Location = glGetUniformLocation(shaderProgram, "uTexture1");
     CHECK_GL_ERRORS();
 
-    // данные о вершинах
+    ////// выбор модели
+    ///// Пирамида
+    // size_t modelVertexCount = piramideVertexCount;
+    // Vertex* modelVertexesData = piramideVertexes;
+    ///// Какая-то модель Obj
+    vector<Vertex> modelVertexes;
+    loadObjModel("res/african_head.obj", modelVertexes);
+    size_t modelVertexCount = modelVertexes.size();
+    Vertex* modelVertexesData = modelVertexes.data();
+
+    // VBO, данные о вершинах
     GLuint VBO = 0;
     glGenBuffers (1, &VBO);
     glBindBuffer (GL_ARRAY_BUFFER, VBO);
-    glBufferData (GL_ARRAY_BUFFER, piramideVertexCount * sizeof(Vertex), piramideVertexes, GL_STATIC_DRAW);
+    glBufferData (GL_ARRAY_BUFFER, modelVertexCount * sizeof(Vertex), (void*)modelVertexesData, GL_STATIC_DRAW);
     CHECK_GL_ERRORS();
 
     // VAO
@@ -260,15 +272,16 @@ int main(int argc, char *argv[]) {
     // текущее время
     double time = glfwGetTime();
 
-
-    ImageData info = loadPngImage("res/test.png");
+    // Загрузка текстуры
+    ImageData info = loadPngImage("res/african_head.png");
+    //  ImageData info = loadPngImage("res/test.png");
     uint textureId = 0;
     if(info.loaded){
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_2D, textureId);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,              // формат внутри OpenGL
                      info.width, info.height, 0,            // ширинна, высота, границы
-                     GL_RGBA, GL_UNSIGNED_BYTE, info.data); // формат входных данных
+                     info.withAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, info.data); // формат входных данных
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         CHECK_GL_ERRORS();
@@ -330,7 +343,7 @@ int main(int argc, char *argv[]) {
 
         // рисуем
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, piramideVertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
+        glDrawArrays(GL_TRIANGLES, 0, modelVertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);

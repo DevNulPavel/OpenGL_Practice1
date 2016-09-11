@@ -10,6 +10,7 @@ set(LIBS_FOLDERS
     # glew
     # zlib
     # libpng
+    # assimp
 	glm
 	glfw
 )
@@ -17,12 +18,14 @@ set(LIBS_LINK_NAMES
     # glew
     # zlibstatic
     # png16_static
+    # assimp_static
 	glfw
 )
 set(LIBS_DEPENCY_NAMES
 	# zlib
 	# libpng
     # glew
+    # assimp
 	glfw
 	glm
 )
@@ -30,6 +33,7 @@ set(LIBS_INCLUDE_FOLDERS
     # zlib
     # libpng
     # glew/include
+    # assimp/include
 	glm/glm 			# TODO: может можно просто корень?
 	glfw/include
     glfw/deps
@@ -132,6 +136,29 @@ endif()
 # endif()
 # include_directories(${GLFW_INCLUDE_DIRS})
 # set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${GLFW_LIBRARIES})
+
+# Библиотека ASSIMP
+find_package(ASSIMP)
+if(NOT ASSIMP_FOUND)   # если не нашли, то добавляем из исходников
+    message("ASSIMP lib not found, build from sources")
+    set (CMAKE_C_FLAGS "${CUSTOM_COMPILER_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CUSTOM_COMPILER_CXX_FLAGS}")
+    option(BUILD_SHARED_LIBS "Build package ASSIM with shared libraries - OFF." OFF)
+    option(ASSIMP_BUILD_TESTS "Assimp no tests - OFF." OFF)
+    option(ASSIMP_BUILD_SAMPLES "Assimp no samples - OFF." OFF)
+    option(ASSIMP_NO_EXPORT "Assimp no export - OFF." ON)
+    option(ASSIMP_BUILD_ASSIMP_TOOLS "Assimp no tools - OFF." OFF)
+    add_subdirectory(${LIBS_FOLDER}/assimp)
+    set(LIBS_DEPENCY_NAMES ${LIBS_DEPENCY_NAMES} assimp)   # То, что указывается в project
+    include_directories(${LIBS_FOLDER}/assimp/include)
+    set(LIBS_LINK_FOLDERS "${LIBS_LINK_FOLDERS} ${CMAKE_BINARY_DIR}/libs/assimp/code")
+    message("CMAKE ASSIMP FOLDER = ${CMAKE_BINARY_DIR}/lib/assimp/code")
+    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} assimp)     # то, что указывается в add_library
+    # add_definitions(-DGLEW_STATIC)
+else()
+    include_directories(${ASSIMP_INCLUDE_DIRS})
+    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${ASSIMP_LIBRARIES})
+endif()
 
 ####################################################
 # Библиотеки собираемые из исходников

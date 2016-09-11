@@ -12,6 +12,8 @@ struct Vertex{
     vec2 texCoord;
 
     // constructor
+    Vertex();
+    Vertex(vec3 inPos, vec3 inNormal, vec2 inTexCoord);
     Vertex(vec3 inPos, vec3 inNormal, vec3 inColor, vec2 inTexCoord);
 };
 
