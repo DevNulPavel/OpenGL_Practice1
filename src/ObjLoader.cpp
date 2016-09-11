@@ -87,7 +87,7 @@ void loadObjModel(const string& modelPath, std::vector<Vertex>& resultVertexes){
         const vec2& uv = uvs[indexValue];
 
         // сохраняем
-        Vertex vertex(vertePos, normalValue, vec3(1.0f, 1.0f, 1.0f), uv);
+        Vertex vertex(vertePos, normalValue, uv);
         resultVertexes[i] = vertex;
     }
 }

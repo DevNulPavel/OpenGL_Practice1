@@ -5,7 +5,6 @@ Vertex::Vertex():
     normal(vec3(0.0, 0.0, 0.0)),
     color(vec3(1.0, 1.0, 1.0)),
     texCoord(vec2(0.0, 0.0)){
-
 }
 
 Vertex::Vertex(vec3 inPos, vec3 inNormal, vec2 inTexCoord):
