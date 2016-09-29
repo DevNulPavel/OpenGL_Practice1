@@ -255,7 +255,7 @@ int main(int argc, char *argv[]) {
     float ratio = float(width) / float(height);
     mat4 projectionMatrix = perspective(glm::radians(45.0f), ratio, 0.1f, 100.0f);
 
-    // отключаем отображение задней части полигонов
+    // отключаем отображение задней части полигоновu
     glEnable(GL_CULL_FACE);
     // отбрасываться будут задние грани
     glCullFace(GL_BACK);

@@ -138,8 +138,9 @@ endif()
 # set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${GLFW_LIBRARIES})
 
 # Библиотека ASSIMP
-find_package(ASSIMP)
-if(NOT ASSIMP_FOUND)   # если не нашли, то добавляем из исходников
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/libs/assimp/cmake-modules/")
+find_package(assimp REQUIRED)
+if(NOT assimp_FOUND)   # если не нашли, то добавляем из исходников
     message("ASSIMP lib not found, build from sources")
     set (CMAKE_C_FLAGS "${CUSTOM_COMPILER_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CUSTOM_COMPILER_CXX_FLAGS}")
@@ -156,8 +157,8 @@ if(NOT ASSIMP_FOUND)   # если не нашли, то добавляем из 
     set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} assimp)     # то, что указывается в add_library
     # add_definitions(-DGLEW_STATIC)
 else()
-    include_directories(${ASSIMP_INCLUDE_DIRS})
-    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${ASSIMP_LIBRARIES})
+    include_directories(${assimp_INCLUDE_DIRS})
+    set(LIBS_LINK_NAMES ${LIBS_LINK_NAMES} ${assimp_LIBRARIES})
 endif()
 
 ####################################################
