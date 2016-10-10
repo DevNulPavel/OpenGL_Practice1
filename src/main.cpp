@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
     CHECK_GL_ERRORS();
 
     // Шейдеры
-    GLuint shaderProgram = createShader();
+    GLuint shaderProgram = create3DShader();
     CHECK_GL_ERRORS();
 
     // аттрибуты вершин шейдера
