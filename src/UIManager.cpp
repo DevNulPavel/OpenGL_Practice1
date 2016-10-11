@@ -5,11 +5,20 @@
 #include "Helpers.h"
 
 
-UIManager(int width, int height){
+UIManager::UIManager(int width, int height){
+    // изменение размера
     resize(width, height);
 
     // Шейдеры
-    _shaderProgram = createUIShader();
+    map<string, int> attributesLocations;
+    attributesLocations["aPos"] = UI_POS_ATTRIBUTE_LOCATION;
+    attributesLocations["aTexCoord"] = UI_TEX_COORD_ATTRIBUTE_LOCATION;
+    _shaderProgram = createUIShader(attributesLocations);
+    CHECK_GL_ERRORS();
+    
+    // юниформы шейдера
+    _matrixLocation = glGetUniformLocation(_shaderProgram, "uModelViewProjMat");
+    _texture0Location = glGetUniformLocation(_shaderProgram, "uTexture1");
     CHECK_GL_ERRORS();
 }
 
@@ -31,8 +40,10 @@ void UIManager::removeElement(const UIElementPtr& element){
 }
 
 void UIManager::draw(){
-    // TODO: Включение шейдера
+    // Включение шейдера
+    glUseProgram (_shaderProgram);
+
     for(const UIElementPtr& element: _items){
-        element->draw(_projectionMatrix, );
+        element->draw(_projectionMatrix, _matrixLocation, _texture0Location);
     }
 }

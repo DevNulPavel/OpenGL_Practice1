@@ -187,15 +187,19 @@ int main(int argc, char *argv[]) {
     glViewport(0, 0, width, height);
     CHECK_GL_ERRORS();
 
-    // Шейдеры
-    GLuint shaderProgram = create3DShader();
-    CHECK_GL_ERRORS();
+    // расположение аттрибутов (с 0)
+    int posAttribLocation = 0;
+    int normalAttribLocation = 1;
+    int colorAttribLocation = 2;
+    int aTexCoordAttribLocation = 3;
 
-    // аттрибуты вершин шейдера
-    int posAttribLocation = glGetAttribLocation(shaderProgram, "aPos");
-    int normalAttribLocation = glGetAttribLocation(shaderProgram, "aNormal");
-    int colorAttribLocation = glGetAttribLocation(shaderProgram, "aColor");
-    int aTexCoordAttribLocation = glGetAttribLocation(shaderProgram, "aTexCoord");
+    // Шейдеры
+    map<string, int> attributesLocations;
+    attributesLocations["aPos"] = posAttribLocation;
+    attributesLocations["aNormal"] = normalAttribLocation;
+    attributesLocations["aColor"] = colorAttribLocation;
+    attributesLocations["aTexCoord"] = aTexCoordAttribLocation;
+    GLuint shaderProgram = create3DShader(attributesLocations);
     CHECK_GL_ERRORS();
 
     // юниформы шейдера

@@ -2,7 +2,8 @@
 #include "Helpers.h"
 
 
-GLuint createShaderFromSources(const char* vertexShader, const char* fragmentShader){
+GLuint createShaderFromSources(const char* vertexShader, const char* fragmentShader,
+                               const map<string,int>& attributeLocations){
     GLuint vs = glCreateShader (GL_VERTEX_SHADER);
     glShaderSource(vs, 1, &vertexShader, NULL);
     glCompileShader(vs);
@@ -16,13 +17,27 @@ GLuint createShaderFromSources(const char* vertexShader, const char* fragmentSha
     GLuint shaderProgram = glCreateProgram ();
     glAttachShader(shaderProgram, fs);
     glAttachShader(shaderProgram, vs);
-    glLinkProgram(shaderProgram);
+    CHECK_GL_ERRORS();
+    
+    // расположение аттрибутов в шейдере
+    map<string,int>::const_iterator it = attributeLocations.begin();
+    while (it != attributeLocations.end()) {
+        const string& attributeName = (*it).first;
+        int attributeLocation = (*it).second;
+        
+        glBindAttribLocation(shaderProgram, attributeLocation, attributeName.c_str());
+        
+        it++;
+    }
     CHECK_GL_ERRORS();
 
+    glLinkProgram(shaderProgram);
+    CHECK_GL_ERRORS();
+    
     return shaderProgram;
 }
 
-GLuint create3DShader(){
+GLuint create3DShader(const map<string,int>& attributeLocations){
     // Шейдер вершин
     const char* vertexShader = STRINGIFY_SHADER(
         // vertex attribute
@@ -93,12 +108,12 @@ GLuint create3DShader(){
         }
     );
 
-    GLuint shader = createShaderFromSources(vertexShader, fragmentShader);
+    GLuint shader = createShaderFromSources(vertexShader, fragmentShader, attributeLocations);
     CHECK_GL_ERRORS();
     return shader;
 }
 
-GLuint createUIShader(){
+GLuint createUIShader(const map<string,int>& attributeLocations){
     // Шейдер вершин
     const char* vertexShader = STRINGIFY_SHADER(
         // vertex attribute
@@ -122,17 +137,17 @@ GLuint createUIShader(){
         varying vec2 vTexCoord;
 
         // текстура
-        uniform sampler2D uTexture1;
+        uniform sampler2D uTexture0;
 
         void main () {
             // текстура
-            vec4 textureColor = texture2D(uTexture1, vTexCoord);
+            vec4 textureColor = texture2D(uTexture0, vTexCoord);
 
             gl_FragColor = textureColor;
         }
     );
 
-    GLuint shader = createShaderFromSources(vertexShader, fragmentShader);
+    GLuint shader = createShaderFromSources(vertexShader, fragmentShader, attributeLocations);
     CHECK_GL_ERRORS();
     return shader;
 }
