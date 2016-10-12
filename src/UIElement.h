@@ -5,6 +5,7 @@
 #include <string>
 #include <functional>
 #include <glm.hpp>
+#include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
 
 using namespace std;
 using namespace glm;
@@ -18,8 +19,8 @@ public:
     void draw(const mat4& projectionMatrix, uint matrixLocation, uint texture0Location);
 
 public:
-    uint _vbo;
-    uint _vao;
+    GLuint _vbo;
+    GLuint _vao;
     uint _texture;
     
     vec2 _size;

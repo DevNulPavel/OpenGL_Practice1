@@ -39,11 +39,13 @@ void UIManager::removeElement(const UIElementPtr& element){
     _items.remove(element);
 }
 
-void UIManager::draw(){
+void UIManager::draw(float delta){
     // Включение шейдера
     glUseProgram (_shaderProgram);
 
     for(const UIElementPtr& element: _items){
         element->draw(_projectionMatrix, _matrixLocation, _texture0Location);
     }
+    
+    glUseProgram (0);
 }

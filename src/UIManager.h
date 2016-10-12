@@ -19,7 +19,7 @@ public:
     void resize(int width, int height);
     void addElement(const UIElementPtr& element);
     void removeElement(const UIElementPtr& element);
-    void draw();
+    void draw(float delta);
 
 private:
     int _shaderProgram;

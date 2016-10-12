@@ -1,6 +1,5 @@
 #include "UIElement.h"
 #include <vector>
-#include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
 #include <glm.hpp>          // библиотека графической математики
 #include <gtc/type_ptr.hpp>
 #include <gtc/matrix_transform.hpp>
@@ -35,6 +34,7 @@ UIElement::UIElement(const string& imagePath):
 }
 
 UIElement::~UIElement(){
+    glDeleteTextures(1, &_texture);
     glDeleteBuffers(1, &_vbo);
     glDeleteVertexArrays(1, &_vao);
 }
@@ -56,6 +56,7 @@ void UIElement::loadTexture(const string& path){
                      info.withAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, info.data); // формат входных данных
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, 0);
         CHECK_GL_ERRORS();
     }
 }
@@ -75,22 +76,30 @@ void UIElement::createVAO(){
     glGenBuffers (1, &_vbo);
     glBindBuffer (GL_ARRAY_BUFFER, _vbo);
     glBufferData (GL_ARRAY_BUFFER, 4 * sizeof(UIElementVertex), (void*)(vertexes.data()), GL_STATIC_DRAW);
+    glBindBuffer (GL_ARRAY_BUFFER, 0);
     CHECK_GL_ERRORS();
     
     // VAO
     _vao = 0;
     glGenVertexArrays (1, &_vao);
     glBindVertexArray (_vao);
+    CHECK_GL_ERRORS();
     // sizeof(Vertex) - размер блока одной информации о вершине
     // OFFSETOF(Vertex, color) - смещение от начала
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    CHECK_GL_ERRORS();
     // Позиции
     glEnableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
     glVertexAttribPointer(UI_POS_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, pos));
+    glDisableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
+    CHECK_GL_ERRORS();
     // Текстурные координаты
     glEnableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
     glVertexAttribPointer(UI_TEX_COORD_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, texCoord));
+    glDisableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
+    CHECK_GL_ERRORS();
     // off
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     CHECK_GL_ERRORS();
 }

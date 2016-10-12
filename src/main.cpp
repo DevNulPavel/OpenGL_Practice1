@@ -19,6 +19,11 @@
 #include "Figures.h"
 #include "Shaders.h"
 #include "ObjLoader.h"
+#include "RenderManager.h"
+#include "UIManager.h"
+
+#define MATH_PI 3.14159265
+
 
 // Документация
 // https://www.opengl.org/sdk/docs/man/html/
@@ -27,18 +32,13 @@ using namespace std;
 using namespace glm;
 
 // Текущие переменные для модели
-bool enableAutoRotate = true;
-vec3 modelPos = vec3(0.0f, 0.0f, -20.0f);
-float xAngle = 0.0;
-float yAngle = 0.0;
-float zAngle = 0.0;
-float size = 1.0;
 bool leftButtonPressed = false;
 bool rightPressed = false;
 double lastCursorPosX = 0.0;
 double lastCursorPosY = 0.0;
 
-#define MATH_PI 3.14159265
+RenderManager* render = nullptr;
+UIManager* uiManager = nullptr;
 
 void glfwErrorCallback(int error, const char* description) {
     printf("OpenGL error = %d\n description = %s\n\n", error, description);
@@ -51,7 +51,9 @@ void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int 
     }
     // по пробелу включаем или выключаем вращение автоматом
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS){
-        enableAutoRotate = !enableAutoRotate;
+        if (render) {
+            render->setEnableAutoRotate(!render->getEnableAutoRotate());
+        }
     }
 }
 
@@ -77,6 +79,13 @@ void glfwMouseButtonCallback(GLFWwindow* window, int button, int state, int mod)
 void glfwCursorCallback(GLFWwindow* window, double x, double y) {
     // при нажатой левой кнопки - вращаем по X и Y
     if(leftButtonPressed){
+        float xAngle = 0.0;
+        float yAngle = 0.0;
+        if (render) {
+            xAngle = render->getXAngle();
+            yAngle = render->getYAngle();
+        }
+    
         xAngle += (y - lastCursorPosY) * 0.5;
         yAngle += (x - lastCursorPosX) * 0.5;
         // ограничение вращения
@@ -86,10 +95,20 @@ void glfwCursorCallback(GLFWwindow* window, double x, double y) {
         if (xAngle > 80) {
            xAngle = 80;
         }
+        
+        if (render) {
+            render->setXAngle(xAngle);
+            render->setYAngle(yAngle);
+        }
     }
 
     // при нажатой левой кнопки - перемещаем по X Y
     if(rightPressed){
+        vec3 modelPos;
+        if (render) {
+            modelPos = render->getModelPos();
+        }
+    
         float offsetY = (y - lastCursorPosY) * 0.02;
         float offsetX = (x - lastCursorPosX) * 0.02;
         float newX = modelPos.x + offsetX;
@@ -107,6 +126,10 @@ void glfwCursorCallback(GLFWwindow* window, double x, double y) {
             newY = 3;
         }
         modelPos = vec3(newX, newY, modelPos.z);
+        
+        if (render) {
+            render->setModelPos(modelPos);
+        }
     }
 
     lastCursorPosX = x;
@@ -114,6 +137,11 @@ void glfwCursorCallback(GLFWwindow* window, double x, double y) {
 }
 
 void glfwScrollCallback(GLFWwindow* window, double scrollByX, double scrollByY) {
+    float size = 0;
+    if (render) {
+        size = render->getSize();
+    }
+
     size += scrollByY * 0.2;
     if(size < 0.5){
         size = 0.5;
@@ -121,21 +149,24 @@ void glfwScrollCallback(GLFWwindow* window, double scrollByX, double scrollByY) 
     if(size > 5.0){
         size = 5.0;
     }
+    
+    if (render) {
+        render->setSize(size);
+    }
 }
 
-int main(int argc, char *argv[]) {
-
+void setupOpenGL(GLFWwindow*& window){
     // окно
-    GLFWwindow* window = 0;
-
+    window = 0;
+    
     // обработчик ошибок
     glfwSetErrorCallback(glfwErrorCallback);
-
+    
     // инициализация GLFW
     if (!glfwInit()){
         exit(EXIT_FAILURE);
     }
-
+    
     // создание окна
     // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -148,149 +179,63 @@ int main(int argc, char *argv[]) {
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-
+    
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);        // вертикальная синхронизация
-
+    
     // Обработка клавиш и прочего
     glfwSetKeyCallback(window, glfwKeyCallback);
     glfwSetMouseButtonCallback(window, glfwMouseButtonCallback);
     glfwSetCursorPosCallback(window, glfwCursorCallback);
     glfwSetScrollCallback(window, glfwScrollCallback);
-
+    
     // инициализация расширений
     glewExperimental = GL_TRUE;
     glewInit();
-
+    
     // Инициализация отладки
     if(glDebugMessageCallback){
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-
+        
         // Коллбек ошибок OpenGL
         glDebugMessageCallback((GLDEBUGPROC)glDebugOut, 0);
-
+        
         // Более высокий уровень отладки
         // GLuint unusedIds = 0;
         // glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);
     }
-
+    
     const unsigned char* version = glGetString(GL_VERSION);
     printf("OpenGL version = %s\n", version);
+}
+
+int main(int argc, char *argv[]) {
+    GLFWwindow* window = 0;
+    setupOpenGL(window);
 
     // оотношение сторон
     int width = 0;
     int height = 0;
     // Размер буффера кадра
     glfwGetFramebufferSize(window, &width, &height);
+    
     // задаем отображение
     glViewport(0, 0, width, height);
-    CHECK_GL_ERRORS();
-
-    // расположение аттрибутов (с 0)
-    int posAttribLocation = 0;
-    int normalAttribLocation = 1;
-    int colorAttribLocation = 2;
-    int aTexCoordAttribLocation = 3;
-
-    // Шейдеры
-    map<string, int> attributesLocations;
-    attributesLocations["aPos"] = posAttribLocation;
-    attributesLocations["aNormal"] = normalAttribLocation;
-    attributesLocations["aColor"] = colorAttribLocation;
-    attributesLocations["aTexCoord"] = aTexCoordAttribLocation;
-    GLuint shaderProgram = create3DShader(attributesLocations);
-    CHECK_GL_ERRORS();
-
-    // юниформы шейдера
-    int modelViewProjMatrixLocation = glGetUniformLocation(shaderProgram, "uModelViewProjMat");
-    int modelViewMatrixLocation = glGetUniformLocation(shaderProgram, "uModelViewMat");
-    int normalMatrixLocation = glGetUniformLocation(shaderProgram, "uNormalMat");
-    int lightPosViewSpaceLocation = glGetUniformLocation(shaderProgram, "uLightPosViewSpace");
-    int texture1Location = glGetUniformLocation(shaderProgram, "uTexture1");
-    CHECK_GL_ERRORS();
-
-    ////// выбор модели
-    ///// Пирамида
-    // size_t modelVertexCount = piramideVertexCount;
-    // Vertex* modelVertexesData = piramideVertexes;
-    ///// Какая-то модель Obj
-    vector<Vertex> modelVertexes;
-    loadObjModel("res/african_head.obj", modelVertexes);
-    size_t modelVertexCount = modelVertexes.size();
-    Vertex* modelVertexesData = modelVertexes.data();
-
-    // VBO, данные о вершинах
-    GLuint VBO = 0;
-    glGenBuffers (1, &VBO);
-    glBindBuffer (GL_ARRAY_BUFFER, VBO);
-    glBufferData (GL_ARRAY_BUFFER, modelVertexCount * sizeof(Vertex), (void*)modelVertexesData, GL_STATIC_DRAW);
-    CHECK_GL_ERRORS();
-
-    // VAO
-    GLuint vao = 0;
-    glGenVertexArrays (1, &vao);
-    glBindVertexArray (vao);
-    // sizeof(Vertex) - размер блока одной информации о вершине
-    // OFFSETOF(Vertex, color) - смещение от начала
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // Позиции
-    glEnableVertexAttribArray(posAttribLocation);
-    glVertexAttribPointer(posAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, pos));
-    // Нормали
-    glEnableVertexAttribArray(normalAttribLocation);
-    glVertexAttribPointer(normalAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, normal));
-    // Цвет вершин
-    glEnableVertexAttribArray(colorAttribLocation);
-    glVertexAttribPointer(colorAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, color));
-    // Текстурные координаты
-    glEnableVertexAttribArray(aTexCoordAttribLocation);
-    glVertexAttribPointer(aTexCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, texCoord));
-    // off
-    glBindVertexArray(0);
-    CHECK_GL_ERRORS();
-
-    // позиция света в мировых координатах
-    vec3 lightPosWorldSpace = vec3(0.0, 0.0, 5.0);
-
-    // вид
-    mat4 viewMatrix = lookAt(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 1.0, 0.0));
-    // Матрица проекции
-    float ratio = float(width) / float(height);
-    mat4 projectionMatrix = perspective(glm::radians(45.0f), ratio, 0.1f, 100.0f);
-
-    // отключаем отображение задней части полигоновu
-    glEnable(GL_CULL_FACE);
-    // отбрасываться будут задние грани
-    glCullFace(GL_BACK);
-    // Определяем, в каком направлении должный обходиться вершины, для передней части (против часовой стрелки?)
-    // задняя часть будет отбрасываться
-    glFrontFace(GL_CCW);
-    CHECK_GL_ERRORS();
-
-    // проверка глубины
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
     CHECK_GL_ERRORS();
 
     // текущее время
     double time = glfwGetTime();
 
-    // Загрузка текстуры
-    ImageData info = loadPngImage("res/african_head.png");
-    //  ImageData info = loadPngImage("res/test.png");
-    uint textureId = 0;
-    if(info.loaded){
-        glGenTextures(1, &textureId);
-        glBindTexture(GL_TEXTURE_2D, textureId);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,              // формат внутри OpenGL
-                     info.width, info.height, 0,            // ширинна, высота, границы
-                     info.withAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, info.data); // формат входных данных
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        CHECK_GL_ERRORS();
-    }
-
+    // рендер 3д графики
+    render = new RenderManager(width, height);
+    
+    // графический интерфейс
+    uiManager = new UIManager(width, height);
+    // элемент 1
+    UIElementPtr element = make_shared<UIElement>("res/african_head.png");
+    uiManager->addElement(element);
+    
     while (!glfwWindowShouldClose(window)){
         // приращение времени
         double newTime = glfwGetTime();
@@ -300,63 +245,21 @@ int main(int argc, char *argv[]) {
         // wipe the drawing surface clear
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram (shaderProgram);
 
-        // Вращаем на 30ть градусов автоматом
-        if(enableAutoRotate){
-            yAngle += timeDelta * 30.0f;
+        // render
+        if (render) {
+            render->draw(timeDelta);
         }
-        mat4 modelMatrix = mat4(1.0);
-        // Здесь тоже обратный порядок умножения матриц
-        // перенос
-        modelMatrix = translate(modelMatrix, modelPos);
-        // скейл
-        modelMatrix = scale(modelMatrix, vec3(size));
-        // вращение относительно осей модели
-        modelMatrix = rotate(modelMatrix, float(xAngle/180.0*MATH_PI), vec3(1.0f, 0.0f, 0.0f));
-        modelMatrix = rotate(modelMatrix, float(yAngle/180.0*MATH_PI), vec3(0.0f, 1.0f, 0.0f));
-        modelMatrix = rotate(modelMatrix, float(zAngle/180.0*MATH_PI), vec3(0.0f, 0.0f, 1.0f));
-
-        // матрица модели-камеры
-        mat4 modelViewMatrix = viewMatrix * modelMatrix;
-
-        // TODO: Вроде бы можно просто матрицу модели?
-        // матрица трансформации нормалей
-        mat4 normalMatrix = transpose(inverse(modelViewMatrix));
-
-        // матрица модель-вид-проекция
-        mat4 modelViewProjMatrix = projectionMatrix * viewMatrix * modelMatrix;
-
-        // позиция света в координатах камеры
-        vec3 lightPosViewSpace = vec3(viewMatrix * vec4(lightPosWorldSpace, 1.0));
-
-        // выставляем матрицу трансформа в координаты камеры
-        glUniformMatrix4fv(modelViewMatrixLocation, 1, false, glm::value_ptr(modelMatrix));
-        // выставляем матрицу трансформа нормалей
-        glUniformMatrix4fv(normalMatrixLocation, 1, false, glm::value_ptr(normalMatrix));
-        // выставляем матрицу трансформации в пространство OpenGL
-        glUniformMatrix4fv(modelViewProjMatrixLocation, 1, false, glm::value_ptr(modelViewProjMatrix));
-        // выставляем позицию света в координатах камеры
-        glUniform3f(lightPosViewSpaceLocation, lightPosViewSpace.x, lightPosViewSpace.y, lightPosViewSpace.z);
-        // говорим шейдеру, что текстура будет на 0 позиции (GL_TEXTURE0)
-        glUniform1i(texture1Location, 0);
-
-        // активируем нулевую текстуру для для шейдера, включаем эту текстуру
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textureId);
-
-        // рисуем
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, modelVertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
-        glBindVertexArray(0);
+//        if (uiManager) {
+//            uiManager->draw(timeDelta);
+//        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    glDeleteProgram(shaderProgram);
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &vao);
+    delete render;
+    delete uiManager;
 
     glfwDestroyWindow(window);
 
