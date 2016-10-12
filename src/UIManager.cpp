@@ -5,7 +5,7 @@
 #include "Helpers.h"
 
 
-UIManager::UIManager(int width, int height){
+UIManager::UIManager(float width, float height){
     // изменение размера
     resize(width, height);
 
@@ -18,7 +18,7 @@ UIManager::UIManager(int width, int height){
     
     // юниформы шейдера
     _matrixLocation = glGetUniformLocation(_shaderProgram, "uModelViewProjMat");
-    _texture0Location = glGetUniformLocation(_shaderProgram, "uTexture1");
+    _texture0Location = glGetUniformLocation(_shaderProgram, "uTexture0");
     CHECK_GL_ERRORS();
 }
 
@@ -27,8 +27,9 @@ UIManager::~UIManager(){
     glDeleteProgram(_shaderProgram);
 }
 
-void UIManager::resize(int width, int height){
-    _projectionMatrix = glm::ortho(0, width, 0, height);
+void UIManager::resize(float width, float height){
+    // обязательно во флоатах, чтобы тип матрицы был верным
+    _projectionMatrix = glm::ortho(0.0f, width, 0.0f, height);
 }
 
 void UIManager::addElement(const UIElementPtr& element){
@@ -40,6 +41,8 @@ void UIManager::removeElement(const UIElementPtr& element){
 }
 
 void UIManager::draw(float delta){
+    glDisable(GL_DEPTH_TEST);
+
     // Включение шейдера
     glUseProgram (_shaderProgram);
 

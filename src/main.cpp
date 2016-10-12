@@ -250,9 +250,9 @@ int main(int argc, char *argv[]) {
         if (render) {
             render->draw(timeDelta);
         }
-//        if (uiManager) {
-//            uiManager->draw(timeDelta);
-//        }
+        if (uiManager) {
+            uiManager->draw(timeDelta);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

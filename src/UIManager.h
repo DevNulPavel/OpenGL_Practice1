@@ -14,9 +14,9 @@ using namespace glm;
 
 class UIManager{
 public:
-    UIManager(int width, int height);
+    UIManager(float width, float height);
     ~UIManager();
-    void resize(int width, int height);
+    void resize(float width, float height);
     void addElement(const UIElementPtr& element);
     void removeElement(const UIElementPtr& element);
     void draw(float delta);

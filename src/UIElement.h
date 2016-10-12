@@ -6,6 +6,7 @@
 #include <functional>
 #include <glm.hpp>
 #include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
+#include "Helpers.h"
 
 using namespace std;
 using namespace glm;
@@ -16,16 +17,21 @@ public:
     UIElement(const string& imagePath);
     ~UIElement();
 
+    SETTER_GETTER(vec2, _position, Position);
+    SETTER_GETTER(vec2, _anchor, Anchor);
+    SETTER_GETTER(vec2, _scale, Scale);
+
     void draw(const mat4& projectionMatrix, uint matrixLocation, uint texture0Location);
 
 public:
     GLuint _vbo;
-    GLuint _vao;
-    uint _texture;
+    GLuint _texture;
     
     vec2 _size;
     vec2 _position;
     vec2 _anchor;
+    vec2 _scale;
+    
     function<void()> _callback;
 
 private:

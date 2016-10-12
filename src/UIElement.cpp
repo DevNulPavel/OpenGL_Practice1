@@ -24,9 +24,11 @@ struct UIElementVertex{
 
 UIElement::UIElement(const string& imagePath):
     _vbo(0),
-    _vao(0),
     _texture(0),
     _callback(nullptr){
+        
+    _anchor = vec2(0.5f);
+    _scale = vec2(1.0f);
         
     // create
     loadTexture(imagePath);
@@ -36,7 +38,6 @@ UIElement::UIElement(const string& imagePath):
 UIElement::~UIElement(){
     glDeleteTextures(1, &_texture);
     glDeleteBuffers(1, &_vbo);
-    glDeleteVertexArrays(1, &_vao);
 }
 
 void UIElement::loadTexture(const string& path){
@@ -66,8 +67,8 @@ void UIElement::createVAO(){
     vertexes.reserve(4);
     
     // вбиваем данные о вершинах
-    vertexes.push_back(UIElementVertex(vec2(0, 0),              vec2(0, 0)));
     vertexes.push_back(UIElementVertex(vec2(0, _size.y),        vec2(0, 1)));
+    vertexes.push_back(UIElementVertex(vec2(0, 0),              vec2(0, 0)));
     vertexes.push_back(UIElementVertex(vec2(_size.x, _size.y),  vec2(1, 1)));
     vertexes.push_back(UIElementVertex(vec2(_size.x, 0),        vec2(1, 0)));
     
@@ -79,29 +80,6 @@ void UIElement::createVAO(){
     glBindBuffer (GL_ARRAY_BUFFER, 0);
     CHECK_GL_ERRORS();
     
-    // VAO
-    _vao = 0;
-    glGenVertexArrays (1, &_vao);
-    glBindVertexArray (_vao);
-    CHECK_GL_ERRORS();
-    // sizeof(Vertex) - размер блока одной информации о вершине
-    // OFFSETOF(Vertex, color) - смещение от начала
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    CHECK_GL_ERRORS();
-    // Позиции
-    glEnableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
-    glVertexAttribPointer(UI_POS_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, pos));
-    glDisableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
-    CHECK_GL_ERRORS();
-    // Текстурные координаты
-    glEnableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
-    glVertexAttribPointer(UI_TEX_COORD_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, texCoord));
-    glDisableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
-    CHECK_GL_ERRORS();
-    // off
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    CHECK_GL_ERRORS();
 }
 
 void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint texture0Location){
@@ -109,6 +87,7 @@ void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint tex
     mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, vec3(_position.x, _position.y, 0.0));
     modelMatrix = glm::translate(modelMatrix, vec3(-(_anchor.x * _size.x), -(_anchor.y * _size.y), 0.0));
+    modelMatrix = glm::scale(modelMatrix, vec3(_scale, 1.0));
     
     // финальная матрица
     mat4 resultMatrix = projectionMatrix * modelMatrix;
@@ -124,7 +103,27 @@ void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint tex
     glBindTexture(GL_TEXTURE_2D, _texture);
     
     // рисуем
-    glBindVertexArray(_vao);
+    //      sizeof(Vertex) - размер блока одной информации о вершине
+    //      OFFSETOF(Vertex, color) - смещение от начала
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    CHECK_GL_ERRORS();
+    
+    // VBO enable arrays
+    glEnableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
+    glEnableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
+    CHECK_GL_ERRORS();
+    
+    // VBO align
+    glVertexAttribPointer(UI_POS_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, pos)); // Позиции
+    glVertexAttribPointer(UI_TEX_COORD_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, texCoord));    // Текстурные координаты
+    CHECK_GL_ERRORS();
+    
+    // draw
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
+    
+    // VBO off
+    glDisableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
+    glDisableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    CHECK_GL_ERRORS();
 }

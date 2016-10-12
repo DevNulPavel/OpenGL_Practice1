@@ -13,9 +13,9 @@ using namespace glm;
 
 class RenderManager{
 public:
-    RenderManager(int width, int height);
+    RenderManager(float width, float height);
     ~RenderManager();
-    void resize(int width, int height);
+    void resize(float width, float height);
     void draw(float delta);
 
     SETTER_GETTER(bool, _enableAutoRotate, EnableAutoRotate);
@@ -35,7 +35,6 @@ private:
     int _texture1Location;
 
     GLuint _vbo;
-    GLuint _vao;
     size_t _modelVertexCount;
     
     uint _textureId;
