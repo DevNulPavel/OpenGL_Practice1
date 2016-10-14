@@ -19,7 +19,9 @@ public:
     void resize(float width, float height);
     void addElement(const UIElementPtr& element);
     void removeElement(const UIElementPtr& element);
+    
     void draw(float delta);
+    void tappedOnPos(const vec2& pos);
 
 private:
     int _shaderProgram;

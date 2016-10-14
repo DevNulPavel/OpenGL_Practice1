@@ -20,8 +20,11 @@ public:
     SETTER_GETTER(vec2, _position, Position);
     SETTER_GETTER(vec2, _anchor, Anchor);
     SETTER_GETTER(vec2, _scale, Scale);
+    SETTER_GETTER(function<void()>, _callback, Callback);
 
     void draw(const mat4& projectionMatrix, uint matrixLocation, uint texture0Location);
+    bool tapAtPos(const vec2& pos);
+    
 
 public:
     GLuint _vbo;

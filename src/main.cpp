@@ -63,6 +63,10 @@ void glfwMouseButtonCallback(GLFWwindow* window, int button, int state, int mod)
         if(state == GLFW_PRESS){
             leftButtonPressed = true;
         }else{
+            if (uiManager && (leftButtonPressed == true)) {
+                uiManager->tappedOnPos(vec2(lastCursorPosX, lastCursorPosY));
+            }
+        
             leftButtonPressed = false;
         }
     }
@@ -233,7 +237,9 @@ int main(int argc, char *argv[]) {
     // графический интерфейс
     uiManager = new UIManager(width, height);
     // элемент 1
-    UIElementPtr element = make_shared<UIElement>("res/african_head.png");
+    UIElementPtr element = make_shared<UIElement>("res/button_green_normal.png");
+    element->setPosition(vec2(100));
+    element->setCallback([](){ cout << "Button pressed" << endl; });
     uiManager->addElement(element);
     
     while (!glfwWindowShouldClose(window)){
@@ -243,7 +249,7 @@ int main(int argc, char *argv[]) {
         time = newTime;
 
         // wipe the drawing surface clear
-        glClearColor(0.0, 0.0, 0.0, 1.0);
+        glClearColor(0.2, 0.2, 0.2, 1.0);
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // render

@@ -42,7 +42,9 @@ void UIManager::removeElement(const UIElementPtr& element){
 
 void UIManager::draw(float delta){
     glDisable(GL_DEPTH_TEST);
-
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
     // Включение шейдера
     glUseProgram (_shaderProgram);
 
@@ -50,5 +52,18 @@ void UIManager::draw(float delta){
         element->draw(_projectionMatrix, _matrixLocation, _texture0Location);
     }
     
+    glDisable(GL_BLEND);
     glUseProgram (0);
+}
+
+void UIManager::tappedOnPos(const vec2& pos){
+    auto rIt = _items.rbegin();
+    while (rIt != _items.rend()) {
+        UIElementPtr element = *rIt;
+        if (element->tapAtPos(pos)) {
+            return;
+        }
+    
+        rIt++;
+    }
 }

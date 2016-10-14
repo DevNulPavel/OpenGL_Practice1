@@ -52,7 +52,7 @@ void UIElement::loadTexture(const string& path){
         // создание текстуры
         glGenTextures(1, &_texture);
         glBindTexture(GL_TEXTURE_2D, _texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,              // формат внутри OpenGL
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,              // формат внутри OpenGL
                      info.width, info.height, 0,            // ширинна, высота, границы
                      info.withAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, info.data); // формат входных данных
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -126,4 +126,22 @@ void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint tex
     glDisableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     CHECK_GL_ERRORS();
+}
+
+bool UIElement::tapAtPos(const vec2& pos){
+    vec2 leftBottom = vec2(_position.x - (_anchor.x*_size.x), _position.y - (_anchor.y*_size.y));
+    vec2 rightTop = vec2(_position.x + (_anchor.x*_size.x), _position.y + (_anchor.y*_size.y));
+    bool x1 = (pos.x > leftBottom.x);
+    bool y1 = (pos.y > leftBottom.y);
+    bool x2 = (pos.x < rightTop.x);
+    bool y2 = (pos.y < rightTop.y);
+
+    if (x1 && y1 && x2 && y2) {
+        if (_callback) {
+            _callback();
+        }
+        return true;
+    }
+    
+    return false;
 }

@@ -73,7 +73,7 @@ RenderManager::RenderManager(float width, float height){
     if(info.loaded){
         glGenTextures(1, &_textureId);
         glBindTexture(GL_TEXTURE_2D, _textureId);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,              // формат внутри OpenGL
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,             // формат внутри OpenGL
                      info.width, info.height, 0,            // ширинна, высота, границы
                      info.withAlpha ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, info.data); // формат входных данных
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
