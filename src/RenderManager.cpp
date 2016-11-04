@@ -48,7 +48,7 @@ RenderManager::RenderManager(float width, float height){
     // Vertex* modelVertexesData = piramideVertexes;
     ///// Какая-то модель Obj
     vector<Vertex> modelVertexes;
-    loadObjModel("res/african_head.obj", modelVertexes);
+    loadObjModel("res/sphere.obj", modelVertexes);
     _modelVertexCount = modelVertexes.size();
     Vertex* modelVertexesData = modelVertexes.data();
     
@@ -67,7 +67,7 @@ RenderManager::RenderManager(float width, float height){
     _viewMatrix = lookAt(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, -1.0), vec3(0.0, 1.0, 0.0));
     
     // Загрузка текстуры
-    ImageData info = loadPngImage("res/african_head.png");
+    ImageData info = loadPngImage("res/sphere.png");
     //  ImageData info = loadPngImage("res/test.png");
     _textureId = 0;
     if(info.loaded){
