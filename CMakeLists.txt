@@ -229,6 +229,11 @@ if (MSYS)
 	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /O0 /g /Wall")
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O0 /g /Wall")
 endif ()
+if (WIN32)
+    # микрософту не нужен флаг -std=c++11
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -g")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -g -stdlib=libc++")
+endif ()
 
 # Вывод информации о настройке копиляции (Функция в CMake/Helpers.cmake)
 print_current_cmake_config()

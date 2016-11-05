@@ -86,6 +86,7 @@ void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint tex
     // рассчет матрицы трансоформов
     mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, vec3(_position.x, _position.y, 0.0));
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(40.0f), vec3(0.0f, 0.0f, 1.0f));
     modelMatrix = glm::translate(modelMatrix, vec3(-(_anchor.x * _size.x), -(_anchor.y * _size.y), 0.0));
     modelMatrix = glm::scale(modelMatrix, vec3(_scale, 1.0));
     
