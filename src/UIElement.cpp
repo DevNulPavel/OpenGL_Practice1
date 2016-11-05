@@ -29,6 +29,7 @@ UIElement::UIElement(const string& imagePath):
         
     _anchor = vec2(0.5f);
     _scale = vec2(1.0f);
+    _angle = 40.0f;
         
     // create
     loadTexture(imagePath);
@@ -86,7 +87,7 @@ void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint tex
     // рассчет матрицы трансоформов
     mat4 modelMatrix(1.0);
     modelMatrix = glm::translate(modelMatrix, vec3(_position.x, _position.y, 0.0));
-    modelMatrix = glm::rotate(modelMatrix, glm::radians(40.0f), vec3(0.0f, 0.0f, 1.0f));
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(_angle), vec3(0.0f, 0.0f, 1.0f));
     modelMatrix = glm::translate(modelMatrix, vec3(-(_anchor.x * _size.x), -(_anchor.y * _size.y), 0.0));
     modelMatrix = glm::scale(modelMatrix, vec3(_scale, 1.0));
     
@@ -130,7 +131,9 @@ void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint tex
 }
 
 bool UIElement::tapAtPos(const vec2& pos){
-    vec2 leftBottom = vec2(_position.x - (_anchor.x*_size.x), _position.y - (_anchor.y*_size.y));
+
+    // вариант с использованием обычной проверки
+    /*vec2 leftBottom = vec2(_position.x - (_anchor.x*_size.x), _position.y - (_anchor.y*_size.y));
     vec2 rightTop = vec2(_position.x + (_anchor.x*_size.x), _position.y + (_anchor.y*_size.y));
     bool x1 = (pos.x > leftBottom.x);
     bool y1 = (pos.y > leftBottom.y);
@@ -142,7 +145,34 @@ bool UIElement::tapAtPos(const vec2& pos){
             _callback();
         }
         return true;
+    }*/
+
+    // Вариант с обратной матрицей трансформа
+    mat4 modelMatrix(1.0);
+    modelMatrix = glm::translate(modelMatrix, vec3(_position.x, _position.y, 0.0));
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(_angle), vec3(0.0f, 0.0f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, vec3(-(_anchor.x * _size.x), -(_anchor.y * _size.y), 0.0));
+    modelMatrix = glm::scale(modelMatrix, vec3(_scale, 1.0));
+
+    mat4 inverseModelMat = glm::inverse(modelMatrix);
+    vec4 resultPos = inverseModelMat * vec4(pos.x, pos.y, 0, 1);
+
+    printf("Result pos: %f, %f\n", resultPos.x, resultPos.y);
+    fflush(stdout);
+
+    vec2 leftBottom = vec2(0, 0);
+    vec2 rightTop = vec2(_size.x, _size.y);
+    bool x1 = (resultPos.x > leftBottom.x);
+    bool y1 = (resultPos.y > leftBottom.y);
+    bool x2 = (resultPos.x < rightTop.x);
+    bool y2 = (resultPos.y < rightTop.y);
+
+    if (x1 && y1 && x2 && y2) {
+        if (_callback) {
+            _callback();
+        }
+        return true;
     }
-    
+
     return false;
 }

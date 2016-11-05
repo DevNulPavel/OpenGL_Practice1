@@ -34,6 +34,7 @@ public:
     vec2 _position;
     vec2 _anchor;
     vec2 _scale;
+    float _angle;
     
     function<void()> _callback;
 

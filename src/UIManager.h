@@ -27,7 +27,8 @@ private:
     int _shaderProgram;
     uint _texture0Location;
     uint _matrixLocation;
-    
+    vec2 _size;
+
     mat4 _projectionMatrix;
     list<UIElementPtr> _items;
 };

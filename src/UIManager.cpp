@@ -28,6 +28,7 @@ UIManager::~UIManager(){
 }
 
 void UIManager::resize(float width, float height){
+    _size = vec2(width, height);
     // обязательно во флоатах, чтобы тип матрицы был верным
     _projectionMatrix = glm::ortho(0.0f, width, 0.0f, height);
 }
@@ -57,10 +58,12 @@ void UIManager::draw(float delta){
 }
 
 void UIManager::tappedOnPos(const vec2& pos){
+    vec2 newPos = vec2(pos.x, _size.y - pos.y);
+
     auto rIt = _items.rbegin();
     while (rIt != _items.rend()) {
         UIElementPtr element = *rIt;
-        if (element->tapAtPos(pos)) {
+        if (element->tapAtPos(newPos)) {
             return;
         }
     
