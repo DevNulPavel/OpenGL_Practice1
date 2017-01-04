@@ -151,3 +151,55 @@ GLuint createUIShader(const map<string,int>& attributeLocations){
     CHECK_GL_ERRORS();
     return shader;
 }
+
+
+GLuint createPostProcessShader(const map<string,int>& attributeLocations){
+    // http://www.sunsetlakesoftware.com/2013/10/21/optimizing-gaussian-blurs-mobile-gpu
+
+    // Шейдер вершин
+    const char* vertexShader = STRINGIFY_SHADER(
+        // vertex attribute
+        attribute vec2 aPos;
+        attribute vec2 aTexCoord;
+        // uniforms
+        uniform mat4 uModelViewProjMat;
+        uniform vec2 singleStepOffset;
+        // output
+        varying vec2 blurCoordinates[5];
+
+        void main () {
+            // цвет и текстурные координаты просто пробрасываем для интерполяции
+            blurCoordinates[0] = aTexCoord.xy;
+            blurCoordinates[1] = aTexCoord.xy + singleStepOffset * 1.407333;
+            blurCoordinates[2] = aTexCoord.xy - singleStepOffset * 1.407333;
+            blurCoordinates[3] = aTexCoord.xy + singleStepOffset * 3.294215;
+            blurCoordinates[4] = aTexCoord.xy - singleStepOffset * 3.294215;
+            
+            // вычисляем позицию точки в пространстве OpenGL
+            gl_Position = uModelViewProjMat * vec4(aPos, 0.0, 1.0);
+        }
+    );
+    const char* fragmentShader = STRINGIFY_SHADER(
+        // переменная текстурных координат
+        varying vec2 blurCoordinates[5];
+        // uniforms
+        uniform float brightness;
+        // текстура
+        uniform sampler2D uTexture0;
+
+        void main () {
+            // текстура
+            vec4 sum = vec4(0.0);
+            sum += texture2D(uTexture0, blurCoordinates[0]) * 0.204164;
+            sum += texture2D(uTexture0, blurCoordinates[1]) * 0.304005;
+            sum += texture2D(uTexture0, blurCoordinates[2]) * 0.304005;
+            sum += texture2D(uTexture0, blurCoordinates[3]) * 0.093913;
+            sum += texture2D(uTexture0, blurCoordinates[4]) * 0.093913;
+            gl_FragColor = sum * brightness;
+        }
+    );
+
+    GLuint shader = createShaderFromSources(vertexShader, fragmentShader, attributeLocations);
+    CHECK_GL_ERRORS();
+    return shader;
+}

@@ -10,5 +10,6 @@ using namespace std;
 
 GLuint create3DShader(const map<string,int>& attributeLocations);
 GLuint createUIShader(const map<string,int>& attributeLocations);
+GLuint createPostProcessShader(const map<string,int>& attributeLocations);
 
 #endif

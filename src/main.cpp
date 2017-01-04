@@ -21,6 +21,7 @@
 #include "ObjLoader.h"
 #include "RenderManager.h"
 #include "UIManager.h"
+#include "PostProcessManager.h"
 
 #define MATH_PI 3.14159265
 
@@ -39,6 +40,11 @@ double lastCursorPosY = 0.0;
 
 RenderManager* render = nullptr;
 UIManager* uiManager = nullptr;
+PostProcessManager* postProcessManager = nullptr;
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
 
 void glfwErrorCallback(int error, const char* description) {
     printf("OpenGL error = %d\n description = %s\n\n", error, description);
@@ -242,6 +248,10 @@ int main(int argc, char *argv[]) {
     element->setCallback([](){ cout << "Button pressed" << endl; });
     uiManager->addElement(element);
     
+    // менеджер постпроцессинга
+    postProcessManager = new PostProcessManager(width, height);
+    
+    
     while (!glfwWindowShouldClose(window)){
         // приращение времени
         double newTime = glfwGetTime();
@@ -252,13 +262,18 @@ int main(int argc, char *argv[]) {
         glClearColor(0.2, 0.2, 0.2, 1.0);
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // render
+        // rendering
+        postProcessManager->grabStart();
         if (render) {
             render->draw(timeDelta);
         }
         if (uiManager) {
             uiManager->draw(timeDelta);
         }
+        postProcessManager->grabEnd();
+        
+        // PostProc draw
+        postProcessManager->draw(timeDelta);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -266,6 +281,7 @@ int main(int argc, char *argv[]) {
 
     delete render;
     delete uiManager;
+    delete postProcessManager;
 
     glfwDestroyWindow(window);
 

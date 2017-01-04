@@ -162,22 +162,25 @@ void RenderManager::draw(float delta){
     //      sizeof(Vertex) - размер блока одной информации о вершине
     //      OFFSETOF(Vertex, color) - смещение от начала
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    CHECK_GL_ERRORS();
     
     // VBO enable attrib
     glEnableVertexAttribArray(POS_ATTRIB_LOCATION);
     glEnableVertexAttribArray(NORMAL_ATTRIB_LOCATION);
     glEnableVertexAttribArray(COLOR_ATTRIB_LOCATION);
     glEnableVertexAttribArray(TEX_COORD_ATTRIB_LOCATION);
+    CHECK_GL_ERRORS();
     
     // VBO align
     glVertexAttribPointer(POS_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, pos));   // Позиции
     glVertexAttribPointer(NORMAL_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, normal)); // Нормали
     glVertexAttribPointer(COLOR_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, color));   // Цвет вершин
     glVertexAttribPointer(TEX_COORD_ATTRIB_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, texCoord));    // Текстурные координаты
+    CHECK_GL_ERRORS();
     
     // draw
     glDrawArrays(GL_TRIANGLES, 0, _modelVertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
-    glBindVertexArray(0);
+    CHECK_GL_ERRORS();
     
     // VBO off
     glDisableVertexAttribArray(POS_ATTRIB_LOCATION);
@@ -185,6 +188,7 @@ void RenderManager::draw(float delta){
     glDisableVertexAttribArray(COLOR_ATTRIB_LOCATION);
     glDisableVertexAttribArray(TEX_COORD_ATTRIB_LOCATION);
     glBindBuffer (GL_ARRAY_BUFFER, 0);
+    CHECK_GL_ERRORS();
     
     // shader off
     glUseProgram (0);
