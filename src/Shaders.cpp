@@ -83,7 +83,7 @@ GLuint create3DShader(const map<string,int>& attributeLocations){
         const float specularShinnes = 3.0;  // >0
 
         void main () {
-            // Рассчет освещения
+            // Рассчет освещения (в пиксельном шейдере, чтобы можно было подключить карту нормалей)
             vec3 fromTexelToLightDir = normalize(uLightPosViewSpace - vPosViewSpace);
             vec3 fromTexelToEyesDir = normalize(-vPosViewSpace);
             vec3 texelLightReflectionDir = normalize(reflect(-fromTexelToLightDir, vNormalViewSpace));
