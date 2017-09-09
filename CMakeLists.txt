@@ -139,7 +139,7 @@ endif()
 
 # Библиотека ASSIMP
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/libs/assimp/cmake-modules/")
-find_package(assimp REQUIRED)
+find_package(assimp)
 if(NOT assimp_FOUND)   # если не нашли, то добавляем из исходников
     message("ASSIMP lib not found, build from sources")
     set (CMAKE_C_FLAGS "${CUSTOM_COMPILER_C_FLAGS}")
