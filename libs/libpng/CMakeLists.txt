@@ -27,7 +27,7 @@ find_package(ZLIB)
 # если не нашли, то добавляем из исходников
 if(NOT ZLIB_FOUND)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../zlib libs)
-    set(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../zlib)
+    set(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../zlib ${CMAKE_BINARY_DIR}/../zlib)
     set(ZLIB_LIBRARY zlibstatic)
     set(ZLIB_DEPENCY zlib)
 endif()
