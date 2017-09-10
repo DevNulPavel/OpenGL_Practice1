@@ -30,7 +30,6 @@ if(NOT ZLIB_FOUND)
     set(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../zlib ${CMAKE_BINARY_DIR}/../zlib)
     set(ZLIB_LIBRARY zlibstatic)
     set(ZLIB_DEPENCY zlib)
-    message("ZLIB INCLUDES: ${ZLIB_INCLUDE_DIR}")
 endif()
 include_directories(${ZLIB_INCLUDE_DIR})
 
