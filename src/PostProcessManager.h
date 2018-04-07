@@ -1,6 +1,8 @@
 #ifndef POST_PROCESS_NODE
 #define POST_PROCESS_NODE
 
+#define _USE_MATH_DEFINES // for math.h
+
 #include <GL/glew.h>        // для поддержки расширений, шейдеров и так далее
 #include <glm.hpp>
 

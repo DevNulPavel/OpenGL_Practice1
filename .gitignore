@@ -1,4 +1,5 @@
-build/
+build*/
+
 
 # XCode noise
 PLBlocks.framework/*

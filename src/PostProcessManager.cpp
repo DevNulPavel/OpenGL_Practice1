@@ -1,4 +1,5 @@
 #include "PostProcessManager.h"
+#include <math.h>
 #include <map>
 #include <vector>
 #include <gtc/type_ptr.hpp>
