@@ -60,6 +60,46 @@ RenderManager::RenderManager(float width, float height){
     glBindBuffer (GL_ARRAY_BUFFER, 0);
     CHECK_GL_ERRORS();
     
+    // VAO
+    _vao = 0;
+    glGenVertexArrays(1, &_vao);
+
+    // Bind VAO
+    glBindVertexArray(_vao);
+
+    // Bind VBO
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    CHECK_GL_ERRORS();
+
+    // VBO enable attrib
+    glEnableVertexAttribArray(POS_ATTRIB_LOCATION);
+    glEnableVertexAttribArray(NORMAL_ATTRIB_LOCATION);
+    glEnableVertexAttribArray(COLOR_ATTRIB_LOCATION);
+    glEnableVertexAttribArray(TEX_COORD_ATTRIB_LOCATION);
+    CHECK_GL_ERRORS();
+
+    // VBO align
+    glVertexAttribPointer(POS_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, pos));   // Позиции
+    glVertexAttribPointer(NORMAL_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, normal)); // Нормали
+    glVertexAttribPointer(COLOR_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, color));   // Цвет вершин
+    glVertexAttribPointer(TEX_COORD_ATTRIB_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, texCoord));    // Текстурные координаты
+    CHECK_GL_ERRORS();
+
+    // Attrib off
+    glDisableVertexAttribArray(POS_ATTRIB_LOCATION);
+    glDisableVertexAttribArray(NORMAL_ATTRIB_LOCATION);
+    glDisableVertexAttribArray(COLOR_ATTRIB_LOCATION);
+    glDisableVertexAttribArray(TEX_COORD_ATTRIB_LOCATION);
+    CHECK_GL_ERRORS();
+
+    // VBO off
+    glBindBuffer (GL_ARRAY_BUFFER, 0);
+    CHECK_GL_ERRORS();
+
+    // Unbind VAO
+    glBindVertexArray(0);
+    CHECK_GL_ERRORS();
+
     // позиция света в мировых координатах
     _lightPosWorldSpace = vec3(0.0, 0.0, 5.0);
     
@@ -85,6 +125,7 @@ RenderManager::RenderManager(float width, float height){
 RenderManager::~RenderManager(){
     glDeleteTextures(1, &_textureId);
     glDeleteProgram(_shaderProgram);
+    glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
 }
 
@@ -158,12 +199,9 @@ void RenderManager::draw(float delta){
     glBindTexture(GL_TEXTURE_2D, _textureId);
     CHECK_GL_ERRORS();
     
-    // рисуем
-    //      sizeof(Vertex) - размер блока одной информации о вершине
-    //      OFFSETOF(Vertex, color) - смещение от начала
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    CHECK_GL_ERRORS();
-    
+    // Bind VAO
+    glBindVertexArray(_vao);
+
     // VBO enable attrib
     glEnableVertexAttribArray(POS_ATTRIB_LOCATION);
     glEnableVertexAttribArray(NORMAL_ATTRIB_LOCATION);
@@ -171,25 +209,21 @@ void RenderManager::draw(float delta){
     glEnableVertexAttribArray(TEX_COORD_ATTRIB_LOCATION);
     CHECK_GL_ERRORS();
     
-    // VBO align
-    glVertexAttribPointer(POS_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, pos));   // Позиции
-    glVertexAttribPointer(NORMAL_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, normal)); // Нормали
-    glVertexAttribPointer(COLOR_ATTRIB_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, color));   // Цвет вершин
-    glVertexAttribPointer(TEX_COORD_ATTRIB_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, texCoord));    // Текстурные координаты
-    CHECK_GL_ERRORS();
-    
     // draw
     glDrawArrays(GL_TRIANGLES, 0, _modelVertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
     CHECK_GL_ERRORS();
-    
+
     // VBO off
     glDisableVertexAttribArray(POS_ATTRIB_LOCATION);
     glDisableVertexAttribArray(NORMAL_ATTRIB_LOCATION);
     glDisableVertexAttribArray(COLOR_ATTRIB_LOCATION);
     glDisableVertexAttribArray(TEX_COORD_ATTRIB_LOCATION);
-    glBindBuffer (GL_ARRAY_BUFFER, 0);
     CHECK_GL_ERRORS();
-    
+
+    // Unbind VAO
+    glBindVertexArray(0);
+    CHECK_GL_ERRORS();
+
     // shader off
     glUseProgram (0);
     

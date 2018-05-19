@@ -28,6 +28,7 @@ public:
 
 public:
     GLuint _vbo;
+    GLuint _vao;
     GLuint _texture;
     
     vec2 _size;

@@ -33,6 +33,7 @@ PostProcessManager::PostProcessManager(int width, int height):
     _depthTexture(0),
     _fbo(0),
     _vbo(0),
+    _vao(0),
     _shaderProgram(0),
     _texture0Location(0),
     _matrixLocation(0),
@@ -47,6 +48,7 @@ PostProcessManager::~PostProcessManager() {
     glDeleteFramebuffers(1, &_fbo);
     glDeleteTextures(1, &_depthTexture);
     glDeleteTextures(1, &_colorTexture);
+    glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
 }
 
@@ -127,6 +129,41 @@ void PostProcessManager::createDrawObjects(){
     glBufferData (GL_ARRAY_BUFFER, 4 * sizeof(PostProcessVertex), (void*)(vertexes.data()), GL_STATIC_DRAW);
     glBindBuffer (GL_ARRAY_BUFFER, 0);
     CHECK_GL_ERRORS();
+
+    // VAO
+    _vao = 0;
+    glGenVertexArrays(1, &_vao);
+
+    // Bind VAO
+    glBindVertexArray(_vao);
+
+    // Bind VBO
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    CHECK_GL_ERRORS();
+
+    // VBO enable arrays
+    glEnableVertexAttribArray(POSTPROC_POS_ATTRIBUTE_LOCATION);
+    glEnableVertexAttribArray(POSTPROC_TEX_COORD_ATTRIBUTE_LOCATION);
+    CHECK_GL_ERRORS();
+
+    // VBO align
+    glVertexAttribPointer(POSTPROC_POS_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(PostProcessVertex), OFFSETOF(PostProcessVertex, pos)); // Позиции
+    glVertexAttribPointer(POSTPROC_TEX_COORD_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(PostProcessVertex), OFFSETOF(PostProcessVertex, texCoord));    // Текстурные координаты
+    CHECK_GL_ERRORS();
+
+    // Attrib off
+    glDisableVertexAttribArray(POSTPROC_POS_ATTRIBUTE_LOCATION);
+    glDisableVertexAttribArray(POSTPROC_TEX_COORD_ATTRIBUTE_LOCATION);
+    CHECK_GL_ERRORS();
+
+    // VBO off
+    glBindBuffer (GL_ARRAY_BUFFER, 0);
+    CHECK_GL_ERRORS();
+
+    // Unbind VAO
+    glBindVertexArray(0);
+    CHECK_GL_ERRORS();
+
 }
 
 void PostProcessManager::grabStart() {
@@ -185,29 +222,24 @@ void PostProcessManager::draw(float delta){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _colorTexture);
     
-    // рисуем
-    //      sizeof(Vertex) - размер блока одной информации о вершине
-    //      OFFSETOF(Vertex, color) - смещение от начала
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    CHECK_GL_ERRORS();
+    // Bind VAO
+    glBindVertexArray(_vao);
     
-    // VBO enable arrays
+    // Attrib enable arrays
     glEnableVertexAttribArray(POSTPROC_POS_ATTRIBUTE_LOCATION);
     glEnableVertexAttribArray(POSTPROC_TEX_COORD_ATTRIBUTE_LOCATION);
-    CHECK_GL_ERRORS();
-    
-    // VBO align
-    glVertexAttribPointer(POSTPROC_POS_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(PostProcessVertex), OFFSETOF(PostProcessVertex, pos)); // Позиции
-    glVertexAttribPointer(POSTPROC_TEX_COORD_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(PostProcessVertex), OFFSETOF(PostProcessVertex, texCoord));    // Текстурные координаты
     CHECK_GL_ERRORS();
     
     // draw
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     
-    // VBO off
+    // Attrib off
     glDisableVertexAttribArray(POSTPROC_POS_ATTRIBUTE_LOCATION);
     glDisableVertexAttribArray(POSTPROC_TEX_COORD_ATTRIBUTE_LOCATION);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Unbind VAO
+    glBindVertexArray(0);
+    CHECK_GL_ERRORS();
     
     glDisable(GL_BLEND);
     glUseProgram (0);

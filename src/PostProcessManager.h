@@ -31,6 +31,7 @@ private:
 	uint _fbo;
     
     uint _vbo;
+    uint _vao;
     int _shaderProgram;
     int _texture0Location;
     int _matrixLocation;
