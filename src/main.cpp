@@ -178,13 +178,12 @@ void setupOpenGL(GLFWwindow*& window){
     }
     
     // создание окна
-    //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API); // OSX
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // OSX
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2); // OSX
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0); // OSX
+#ifndef __APPLE__
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // OSX
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+#endif
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
@@ -260,7 +259,6 @@ int main(int argc, char *argv[]) {
     
     // менеджер постпроцессинга
     postProcessManager = new PostProcessManager(width, height);
-    
     
     while (!glfwWindowShouldClose(window)){
         // приращение времени

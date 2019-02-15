@@ -92,7 +92,7 @@ enable_testing()
 ####################################################
 message("******** System libs search ***********")
 # Библиотека PNG REQUIRED
-find_package(PNG)
+#find_package(PNG)
 if(NOT PNG_FOUND)   # если не нашли, то добавляем из исходников
     message("PNG lib not found, build from sources")
 	set (CMAKE_C_FLAGS "${CUSTOM_COMPILER_C_FLAGS}")
@@ -108,7 +108,7 @@ else()
 endif()
 
 # Библиотека GLEW REQUIRED
-find_package(GLEW)
+#find_package(GLEW)
 if(NOT GLEW_FOUND)   # если не нашли, то добавляем из исходников
     message("GLEW lib not found, build from sources")
 	set (CMAKE_C_FLAGS "${CUSTOM_COMPILER_C_FLAGS}")
@@ -139,7 +139,7 @@ endif()
 
 # Библиотека ASSIMP
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/libs/assimp/cmake-modules/")
-find_package(assimp)
+#find_package(assimp)
 if(NOT assimp_FOUND)   # если не нашли, то добавляем из исходников
     message("ASSIMP lib not found, build from sources")
     set (CMAKE_C_FLAGS "${CUSTOM_COMPILER_C_FLAGS}")

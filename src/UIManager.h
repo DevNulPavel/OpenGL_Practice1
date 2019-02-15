@@ -25,8 +25,8 @@ public:
 
 private:
     int _shaderProgram;
-    uint _texture0Location;
-    uint _matrixLocation;
+    int _texture0Location;
+    int _matrixLocation;
     vec2 _size;
 
     mat4 _projectionMatrix;
