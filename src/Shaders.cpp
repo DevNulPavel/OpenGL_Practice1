@@ -1,5 +1,7 @@
 #include "Shaders.h"
 #include "Helpers.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 
 GLuint createShaderFromSources(const char* vertexShader, const char* fragmentShader){
@@ -19,6 +21,21 @@ GLuint createShaderFromSources(const char* vertexShader, const char* fragmentSha
     glLinkProgram(shaderProgram);
     CHECK_GL_ERRORS();
 
+    int infologLength = 0;
+    glGetShaderiv(shaderProgram, GL_INFO_LOG_LENGTH, &infologLength);
+    if (infologLength > 0){
+        GLchar* infoLog = (GLchar*)malloc(static_cast<size_t>(infologLength));
+        if (infoLog == nullptr){
+            printf("ERROR: Could not allocate InfoLog buffer");
+            exit(1);
+        }
+        int charsWritten = 0;
+        glGetShaderInfoLog(shaderProgram, infologLength, &charsWritten, infoLog);
+        printf("Shader InfoLog:\n%s", infoLog );
+        free(infoLog);
+    }
+    CHECK_GL_ERRORS();
+    
     return shaderProgram;
 }
 

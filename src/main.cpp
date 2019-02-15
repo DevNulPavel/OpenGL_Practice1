@@ -96,10 +96,13 @@ int main(int argc, char *argv[]) {
     }
 
     // создание окна
-    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API); // OSX
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // OSX
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2); // OSX
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0); // OSX
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
@@ -110,6 +113,7 @@ int main(int argc, char *argv[]) {
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);        // вертикальная синхронизация
+    CHECK_GL_ERRORS();
 
     // Обработка клавиш и прочего
     glfwSetKeyCallback(window, glfwKeyCallback);
@@ -120,6 +124,12 @@ int main(int argc, char *argv[]) {
     // инициализация расширений
     glewExperimental = GL_TRUE;
     glewInit();
+    CHECK_GL_ERRORS();
+    
+    // инициализация расширений
+    glewExperimental = GL_TRUE;
+    glewInit();
+    CHECK_GL_ERRORS();
 
     // Инициализация отладки
     if(glDebugMessageCallback){
@@ -133,7 +143,8 @@ int main(int argc, char *argv[]) {
         // GLuint unusedIds = 0;
         // glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);
     }
-
+    CHECK_GL_ERRORS();
+    
     const unsigned char* version = glGetString(GL_VERSION);
     printf("OpenGL version = %s\n", version);
 
@@ -142,6 +153,8 @@ int main(int argc, char *argv[]) {
     int height = 0;
     // Размер буффера кадра
     glfwGetFramebufferSize(window, &width, &height);
+    CHECK_GL_ERRORS();
+    
     // задаем отображение
     glViewport(0, 0, width, height);
     CHECK_GL_ERRORS();
