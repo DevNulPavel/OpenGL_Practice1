@@ -96,13 +96,12 @@ int main(int argc, char *argv[]) {
     }
 
     // создание окна
-    //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API); // OSX
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // OSX
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2); // OSX
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0); // OSX
+#ifndef __APPLE__
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // OSX
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+#endif
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
@@ -174,28 +173,12 @@ int main(int argc, char *argv[]) {
 
     // VBO, данные о вершинах
     GLuint VBO = 0;
-    glGenBuffers (1, &VBO);
-    glBindBuffer (GL_ARRAY_BUFFER, VBO);
-    glBufferData (GL_ARRAY_BUFFER, triangleVertexCount * sizeof(Vertex), triangleVertexes, GL_STATIC_DRAW);
-    CHECK_GL_ERRORS();
-
-    // VAO
-    GLuint vao = 0;
-    glGenVertexArrays (1, &vao);
-    glBindVertexArray (vao);
-    // sizeof(Vertex) - размер блока данных о вершине
-    // OFFSETOF(Vertex, color) - смещение от начала
+    glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // Позиции
-    glEnableVertexAttribArray(posAttribLocation);
-    glVertexAttribPointer(posAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, pos));
-    // Цвет вершин
-    glEnableVertexAttribArray(colorAttribLocation);
-    glVertexAttribPointer(colorAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, color));
-    // off
-    glBindVertexArray(0);
+    glBufferData(GL_ARRAY_BUFFER, triangleVertexCount * sizeof(Vertex), triangleVertexes, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     CHECK_GL_ERRORS();
-
+    
     // отключаем отображение задней части полигонов
     glEnable(GL_CULL_FACE);
     // отбрасываться будут задние грани
@@ -226,7 +209,6 @@ int main(int argc, char *argv[]) {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         CHECK_GL_ERRORS();
     }
-
     while (!glfwWindowShouldClose(window)){
         // приращение времени
         double newTime = glfwGetTime();
@@ -243,11 +225,23 @@ int main(int argc, char *argv[]) {
 
         // выставляем матрицу трансформации в пространство OpenGL
         glUniformMatrix4fv(modelViewProjMatrixLocation, 1, false, glm::value_ptr(modelViewProjMatrix));
-
+        
+        // sizeof(Vertex) - размер блока данных о вершине
+        // OFFSETOF(Vertex, color) - смещение от начала
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        // Позиции
+        glEnableVertexAttribArray(posAttribLocation);
+        glVertexAttribPointer(posAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, pos));
+        // Цвет вершин
+        glEnableVertexAttribArray(colorAttribLocation);
+        glVertexAttribPointer(colorAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSETOF(Vertex, color));
+        CHECK_GL_ERRORS();
+        
         // рисуем
-        glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, triangleVertexCount); // draw points 0-3 from the currently bound VAO with current in-use shader
-        glBindVertexArray(0);
+        
+        // VBO off
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -255,7 +249,6 @@ int main(int argc, char *argv[]) {
 
     glDeleteProgram(shaderProgram);
     glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &vao);
 
     glfwDestroyWindow(window);
 

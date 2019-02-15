@@ -21,7 +21,7 @@ GLuint createShaderFromSources(const char* vertexShader, const char* fragmentSha
     glLinkProgram(shaderProgram);
     CHECK_GL_ERRORS();
 
-    int infologLength = 0;
+    /*int infologLength = 0;
     glGetShaderiv(shaderProgram, GL_INFO_LOG_LENGTH, &infologLength);
     if (infologLength > 0){
         GLchar* infoLog = (GLchar*)malloc(static_cast<size_t>(infologLength));
@@ -34,7 +34,7 @@ GLuint createShaderFromSources(const char* vertexShader, const char* fragmentSha
         printf("Shader InfoLog:\n%s", infoLog );
         free(infoLog);
     }
-    CHECK_GL_ERRORS();
+    CHECK_GL_ERRORS();*/
     
     return shaderProgram;
 }
