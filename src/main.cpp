@@ -178,7 +178,10 @@ void setupOpenGL(GLFWwindow*& window){
     }
     
     // создание окна
-    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API); // OSX
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // OSX
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2); // OSX
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0); // OSX
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -189,19 +192,23 @@ void setupOpenGL(GLFWwindow*& window){
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
+    CHECK_GL_ERRORS();
     
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);        // вертикальная синхронизация
-    
+    CHECK_GL_ERRORS();
+
     // Обработка клавиш и прочего
     glfwSetKeyCallback(window, glfwKeyCallback);
     glfwSetMouseButtonCallback(window, glfwMouseButtonCallback);
     glfwSetCursorPosCallback(window, glfwCursorCallback);
     glfwSetScrollCallback(window, glfwScrollCallback);
+    CHECK_GL_ERRORS();
     
     // инициализация расширений
     glewExperimental = GL_TRUE;
     glewInit();
+    CHECK_GL_ERRORS();
     
     // Инициализация отладки
     if(glDebugMessageCallback){
@@ -215,6 +222,7 @@ void setupOpenGL(GLFWwindow*& window){
         // GLuint unusedIds = 0;
         // glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, &unusedIds, true);
     }
+    CHECK_GL_ERRORS();
     
     const unsigned char* version = glGetString(GL_VERSION);
     printf("OpenGL version = %s\n", version);
@@ -230,6 +238,7 @@ int main(int argc, char *argv[]) {
     int height = 0;
     // Размер буффера кадра
     glfwGetFramebufferSize(window, &width, &height);
+    CHECK_GL_ERRORS();
     
     // задаем отображение
     glViewport(0, 0, width, height);
