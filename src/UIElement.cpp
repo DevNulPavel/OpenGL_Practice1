@@ -24,7 +24,6 @@ struct UIElementVertex{
 
 UIElement::UIElement(const string& imagePath):
     _vbo(0),
-    _vao(0),
     _texture(0),
     _callback(nullptr){
         
@@ -39,7 +38,6 @@ UIElement::UIElement(const string& imagePath):
 
 UIElement::~UIElement(){
     glDeleteTextures(1, &_texture);
-    glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
 }
 
@@ -82,39 +80,9 @@ void UIElement::createVAO(){
     glBufferData (GL_ARRAY_BUFFER, 4 * sizeof(UIElementVertex), (void*)(vertexes.data()), GL_STATIC_DRAW);
     glBindBuffer (GL_ARRAY_BUFFER, 0);
     CHECK_GL_ERRORS();
-    
-    // VAO
-    _vao = 0;
-    glGenVertexArrays(1, &_vao);
-
-    // Bind VAO
-    glBindVertexArray(_vao);
-
-    // Bind VBO
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    CHECK_GL_ERRORS();
-
-    // VBO enable arrays
-    glEnableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
-    glEnableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
-    CHECK_GL_ERRORS();
-
-    // VBO align
-    glVertexAttribPointer(UI_POS_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, pos)); // Позиции
-    glVertexAttribPointer(UI_TEX_COORD_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, texCoord));    // Текстурные координаты
-    CHECK_GL_ERRORS();
-
-    // Attrib off
-    glDisableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
-    glDisableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
-    CHECK_GL_ERRORS();
 
     // VBO off
     glBindBuffer (GL_ARRAY_BUFFER, 0);
-    CHECK_GL_ERRORS();
-
-    // Unbind VAO
-    glBindVertexArray(0);
     CHECK_GL_ERRORS();
 }
 
@@ -139,14 +107,20 @@ void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint tex
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _texture);
     
-    // Bind VAO
-    glBindVertexArray(_vao);
+    // Bind VBO
+    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+    CHECK_GL_ERRORS();
     
     // VBO enable arrays
     glEnableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
     glEnableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
     CHECK_GL_ERRORS();
     
+    // VBO align
+    glVertexAttribPointer(UI_POS_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, pos)); // Позиции
+    glVertexAttribPointer(UI_TEX_COORD_ATTRIBUTE_LOCATION, 2, GL_FLOAT, GL_FALSE, sizeof(UIElementVertex), OFFSETOF(UIElementVertex, texCoord));    // Текстурные координаты
+    CHECK_GL_ERRORS();
+
     // draw
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     
@@ -154,10 +128,9 @@ void UIElement::draw(const mat4& projectionMatrix, uint matrixLocation, uint tex
     glDisableVertexAttribArray(UI_POS_ATTRIBUTE_LOCATION);
     glDisableVertexAttribArray(UI_TEX_COORD_ATTRIBUTE_LOCATION);
     CHECK_GL_ERRORS();
-
-    // Bind VAO
-    glBindVertexArray(0);
-    CHECK_GL_ERRORS();
+    
+    // VBO off
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 bool UIElement::tapAtPos(const vec2& pos){

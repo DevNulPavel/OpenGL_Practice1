@@ -35,7 +35,6 @@ private:
     int _texture1Location;
 
     GLuint _vbo;
-    GLuint _vao;
     size_t _modelVertexCount;
     
     uint _textureId;
