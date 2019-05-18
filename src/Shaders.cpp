@@ -112,7 +112,6 @@ GLuint create3DShader(const map<string,int>& attributeLocations){
             // проверка, так как 0 в любой степени - это 1.0
             if(specularDot > 0.0){
                specularPower = pow(specularDot, specularShinnes);
-               specularPower = clamp(specularPower, 0.0, 1.0);
             }
             float lightPower = ambientCoef + diffusePower + specularPower;
 
