@@ -98,6 +98,11 @@ set(libpng_sources
   pngwrite.c
   pngwtran.c
   pngwutil.c
+  
+  # ARM sources, comment if does not need
+  arm/arm_init.c
+  arm/filter_neon_intrinsics.c
+  arm/filter_neon.S
 )
 set(pngtest_sources
   pngtest.c
